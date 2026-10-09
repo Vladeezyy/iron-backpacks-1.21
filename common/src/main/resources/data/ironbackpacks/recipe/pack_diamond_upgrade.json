@@ -1,0 +1,26 @@
+{
+  "type": "ironbackpacks:backpack_tier",
+  "category": "misc",
+  "pattern": [
+    "DDD",
+    "CBC",
+    "DDD"
+  ],
+  "key": {
+    "D": {
+      "tag": "c:gems/diamond"
+    },
+    "B": {
+      "item": "ironbackpacks:backpack"
+    },
+    "C": {
+      "item": "ironbackpacks:upgrade"
+    }
+  },
+  "backpack_type": "ironbackpacks:diamond",
+  "specialty": "upgrade",
+  "input_backpack": {
+    "backpack_type": "ironbackpacks:gold",
+    "specialty": "upgrade"
+  }
+}

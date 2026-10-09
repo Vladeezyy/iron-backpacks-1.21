@@ -1,0 +1,87 @@
+plugins {
+    id 'multiloader-loader'
+    id 'fabric-loom'
+}
+
+repositories {
+    maven {
+        name = 'Fabric'
+        url = 'https://maven.fabricmc.net'
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings loom.layered {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${parchment_minecraft}:${parchment_version}@zip")
+    }
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+
+    modCompileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_fabric_version}"
+    modCompileOnly "mezz.jei:jei-${minecraft_version}-fabric-api:${jei_fabric_version}"
+    modLocalRuntime "mezz.jei:jei-${minecraft_version}-fabric:${jei_fabric_version}"
+    // JEI's nested config library (dev runs don't load nested jars)
+    modLocalRuntime "maven.modrinth:mezzconfig:0.5.6"
+}
+
+loom {
+    runs {
+        client {
+            client()
+            runDir('run')
+        }
+        server {
+            server()
+            runDir('run')
+        }
+        // headless GameTests: run them, write the report and stop (fabric-api gametest)
+        gametest {
+            server()
+            name 'Game Test'
+            vmArg '-Dfabric-api.gametest'
+            vmArg "-Dfabric-api.gametest.report-file=${project.layout.buildDirectory.get()}/gametest-report.xml"
+            runDir('run-gametest')
+        }
+        // the DevScene (see the neoforge project)
+        scene {
+            client()
+            name 'Scene'
+            programArgs '--quickPlaySingleplayer', 'ib_scene'
+            vmArg '-Dironbackpacks.scene=true'
+            runDir('run')
+        }
+    }
+}
+
+// Each GameTest run starts from a fresh world.
+def gameTestDir = file('run-gametest')
+tasks.matching { it.name == 'runGametest' }.configureEach {
+    doFirst { new File(gameTestDir, 'world').deleteDir() }
+}
+
+// The release jar on a real (intermediary-mapped) Fabric server with Fabric API: runs the GameTests there.
+configurations {
+    productionMods { transitive = false }
+}
+dependencies {
+    productionMods "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+    // not part of the Fabric API bundle; without it the server ignores -Dfabric-api.gametest and just keeps running
+    productionMods "net.fabricmc.fabric-api:fabric-gametest-api-v1:2.0.5+6fc22b9919"
+}
+def prodDir = file('run-prod')
+tasks.register('prodGametest', net.fabricmc.loom.task.prod.ServerProductionRunTask) {
+    dependsOn remapJar
+    mods.from(remapJar.archiveFile)
+    mods.from(configurations.productionMods)
+    jvmArgs.add('-Dfabric-api.gametest')
+    runDir = prodDir
+    // never hang: the tests take under a minute
+    timeout = java.time.Duration.ofMinutes(5)
+    doFirst {
+        new File(prodDir, 'world').deleteDir()
+        prodDir.mkdirs()
+        new File(prodDir, 'eula.txt').text = 'eula=true\n'
+    }
+}

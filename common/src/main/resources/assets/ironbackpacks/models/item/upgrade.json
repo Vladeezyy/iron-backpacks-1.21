@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "ironbackpacks:item/upgrade_blank"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "ironbackpacks:upgrade": 0.1
+      },
+      "model": "ironbackpacks:item/upgrade/damage_bar"
+    },
+    {
+      "predicate": {
+        "ironbackpacks:upgrade": 0.2
+      },
+      "model": "ironbackpacks:item/upgrade/lock"
+    },
+    {
+      "predicate": {
+        "ironbackpacks:upgrade": 0.3
+      },
+      "model": "ironbackpacks:item/upgrade/extra_upgrade"
+    },
+    {
+      "predicate": {
+        "ironbackpacks:upgrade": 0.4
+      },
+      "model": "ironbackpacks:item/upgrade/everlasting"
+    }
+  ]
+}

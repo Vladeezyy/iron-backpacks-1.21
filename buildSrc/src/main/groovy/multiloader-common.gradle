@@ -1,0 +1,71 @@
+// Shared by common, neoforge and fabric (after the MultiLoader template by jaredlll08)
+plugins {
+    id 'java-library'
+}
+
+version = "${mod_version}+${minecraft_version}"
+
+base {
+    archivesName = project.name == 'common' ? "${mod_id}-common" : "${mod_id}-${project.name}"
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+}
+
+repositories {
+    mavenCentral()
+    exclusiveContent {
+        forRepositories(
+                maven {
+                    name = 'ParchmentMC'
+                    url = 'https://maven.parchmentmc.org/'
+                },
+                maven {
+                    name = 'NeoForge'
+                    url = 'https://maven.neoforged.net/releases'
+                }
+        )
+        filter { includeGroup('org.parchmentmc.data') }
+    }
+    // JEI
+    maven { url = 'https://maven.blamejared.com/' }
+    // compatibility checks with other mods (-PcompatMods=...), dev runs only
+    maven {
+        url = 'https://api.modrinth.com/maven'
+        content { includeGroup 'maven.modrinth' }
+    }
+}
+
+dependencies {
+    // javax.annotation.Nonnull / Nullable of the 1.12 code (Minecraft ships them at runtime, Loom doesn't put them on the classpath)
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-Xmaxerrs', '100000']
+}
+
+jar {
+    from(rootProject.file('LICENSE'))
+}
+
+processResources {
+    var expandProps = [
+            'version'                : version,
+            'mod_version'            : mod_version,
+            'minecraft_version'      : minecraft_version,
+            'minecraft_version_range': minecraft_version_range,
+            'neo_version_range'      : neo_version_range,
+            'fabric_loader_version'  : fabric_loader_version,
+            'mod_name'               : mod_name,
+            'mod_id'                 : mod_id,
+            'license'                : license,
+            'java_version'           : java_version,
+    ]
+    filesMatching(['fabric.mod.json', 'META-INF/neoforge.mods.toml', '*.mixins.json']) {
+        expand expandProps
+    }
+    inputs.properties(expandProps)
+}

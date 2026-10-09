@@ -1,0 +1,89 @@
+plugins {
+    id 'multiloader-loader'
+    id 'net.neoforged.moddev'
+}
+
+neoForge {
+    version = neo_version
+    parchment {
+        minecraftVersion = parchment_minecraft
+        mappingsVersion = parchment_version
+    }
+    runs {
+        configureEach {
+            gameDirectory = project.file('run')
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+        client {
+            client()
+        }
+        server {
+            server()
+            programArgument '--nogui'
+        }
+        gameTestServer {
+            type = 'gameTestServer'
+        }
+        // Scripted test scene (gr8pefish.ironbackpacks.client.DevScene): joins run/saves/ib_scene, screenshots the
+        // backpacks, their GUIs and recipes to run/screenshots/scene_*.png and quits.
+        scene {
+            client()
+            programArguments.addAll '--quickPlaySingleplayer', 'ib_scene'
+            systemProperty 'ironbackpacks.scene', 'true'
+        }
+    }
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+}
+
+dependencies {
+    compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
+    localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+
+    // Compatibility checks in the dev runs, never in the jar: -PcompatMods=curios or -PcompatMods=accessories
+    // (Accessories with its Curios compatibility layer, the usual modpack setup)
+    def compatMods = (project.findProperty('compatMods') ?: '').split(',').findAll { it }
+    if ('curios' in compatMods || 'accessories' in compatMods) {
+        localRuntime "maven.modrinth:curios:9.5.1+1.21.1"
+    }
+    if ('accessories' in compatMods) {
+        localRuntime "maven.modrinth:accessories:1.1.0-beta.53+1.21.1"
+        localRuntime "maven.modrinth:owo-lib:0.12.15.5-beta.1+1.21"
+        localRuntime "maven.modrinth:accessories-compat-layer:0.1.12"
+    }
+}
+
+// neoforge.mods.toml comes from src/main/templates with the gradle properties
+var generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version_range      : neo_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : license,
+            mod_version            : mod_version,
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from 'src/main/templates'
+    into 'build/generated/sources/modMetadata'
+}
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+
+// The 1.21.1 game test server reuses run/world: each run starts from a fresh world.
+def gameTestWorld = file('run/world')
+tasks.matching { it.name == 'runGameTestServer' }.configureEach {
+    doFirst { gameTestWorld.deleteDir() }
+}

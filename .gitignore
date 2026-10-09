@@ -43,3 +43,7 @@ repo/
 _original/
 *.jar
 !gradle/wrapper/gradle-wrapper.jar
+
+### Run directories ###
+run-gametest/
+run-prod/

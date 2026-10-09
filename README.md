@@ -1,7 +1,7 @@
-# Iron Backpacks for Minecraft 1.21.1 (NeoForge)
+# Iron Backpacks for Minecraft 1.21.1 (NeoForge and Fabric)
 
 An unofficial port of [Iron Backpacks](https://github.com/gr8pefish/IronBackpacks) by gr8pefish and contributors
-from Minecraft 1.12.2 (version 3.0.8) to **Minecraft 1.21.1** on **NeoForge 21.1**.
+from Minecraft 1.12.2 (version 3.0.8) to **Minecraft 1.21.1** on **NeoForge 21.1** and **Fabric**.
 
 The port keeps the 1.12.2 behaviour, numbers, textures, sounds and translations (plus a Russian one). The 1.12.2 source is the
 specification; every difference is listed in [PORTLOG.md](PORTLOG.md).
@@ -17,20 +17,25 @@ specification; every difference is listed in [PORTLOG.md](PORTLOG.md).
 | Upgrades | Damage Bar (fill level), Latch (only the owner can open it), Extra Upgrade Point, Everlasting (a dropped backpack never despawns). Added on an anvil, the last one taken off with shears. |
 | Colours | Backpack + dye (every tier); a water bucket washes the colour out. |
 | Key | Open Backpack (default I): the held, offhand or first backpack in the inventory. |
-| Config | `config/ironbackpacks-startup.toml` (enable upgrades), `config/ironbackpacks/blacklist.json` (items that can't go in). |
+| Config | `config/ironbackpacks-startup.toml` on NeoForge / `config/ironbackpacks-startup.json` on Fabric (enable upgrades), `config/ironbackpacks/blacklist.json` (items that can't go in). |
 | JEI | "Increase Backpack Tier" category; backpack variants and upgrades are separate entries. |
 
 ## Building
-Requires JDK 21.
+Requires JDK 21. The game code is in `common`; `neoforge` and `fabric` are thin loader layers over it (after the
+MultiLoader template), behind `gr8pefish.ironbackpacks.platform.IPlatform`.
 ```bash
-./gradlew build              # jar in build/libs/
-./gradlew runClient          # dev client (with JEI)
-./gradlew runGameTestServer  # headless in-game tests
-./gradlew runScene           # scripted scene: screenshots to run/screenshots/ (needs run/saves/ib_scene)
+./gradlew build                          # jars in neoforge/build/libs and fabric/build/libs
+./gradlew :neoforge:runClient            # dev clients (with JEI)
+./gradlew :fabric:runClient
+./gradlew :neoforge:runGameTestServer    # headless in-game tests
+./gradlew :fabric:runGametest
+./gradlew :fabric:prodGametest           # the tests with the release Fabric jar on a real Fabric server
+./gradlew :neoforge:runScene             # scripted scene: screenshots to <loader>/run/screenshots/ (needs run/saves/ib_scene)
+./gradlew :fabric:runScene
 ```
 Resources are generated from the original 1.12.2 assets:
 ```bash
-rm -rf src/main/resources/{assets,data} && python3 -I tools/gen_resources.py <IronBackpacks dev-1.12>/src/main/resources/assets/ironbackpacks src/main/resources
+rm -rf common/src/main/resources/{assets,data} && python3 -I tools/gen_resources.py <IronBackpacks dev-1.12>/src/main/resources/assets/ironbackpacks common/src/main/resources
 ```
 
 ## License and credits

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${version}",
+  "name": "${mod_name}",
+  "description": "Adds tiered backpacks and a system of modular upgrades to go with them!\nUnofficial port of Iron Backpacks (gr8pefish, GPL-3.0) to Minecraft ${minecraft_version} / Fabric.",
+  "authors": ["gr8pefish", "TehNut", "the Iron Backpacks contributors (original)", "port contributors"],
+  "contributors": ["copygirl (backpack GUI)"],
+  "contact": {
+    "homepage": "https://github.com/gr8pefish/IronBackpacks",
+    "sources": "https://github.com/Vladeezyy/iron-backpacks-1.21",
+    "issues": "https://github.com/Vladeezyy/iron-backpacks-1.21/issues"
+  },
+  "license": "${license}",
+  "icon": "ironbackpacks_icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["gr8pefish.ironbackpacks.fabric.IronBackpacksFabric"],
+    "client": ["gr8pefish.ironbackpacks.fabric.IronBackpacksFabricClient"],
+    "jei_mod_plugin": ["gr8pefish.ironbackpacks.integration.jei.IronBackpacksJEIPlugin"],
+    "fabric-gametest": ["gr8pefish.ironbackpacks.gametest.IBGameTests"]
+  },
+  "mixins": ["ironbackpacks.fabric.mixins.json"],
+  "depends": {
+    "fabricloader": ">=${fabric_loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}",
+    "java": ">=${java_version}"
+  },
+  "suggests": {
+    "jei": "*"
+  }
+}

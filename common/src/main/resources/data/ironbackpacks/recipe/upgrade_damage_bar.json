@@ -1,0 +1,39 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "ironbackpacks:upgrade_enabled",
+      "upgrade": "ironbackpacks:damage_bar"
+    }
+  ],
+  "fabric:load_conditions": [
+    {
+      "condition": "ironbackpacks:upgrade_enabled",
+      "upgrade": "ironbackpacks:damage_bar"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "MSM",
+    "SCS",
+    "MSM"
+  ],
+  "key": {
+    "M": {
+      "item": "minecraft:bowl"
+    },
+    "S": {
+      "tag": "c:strings"
+    },
+    "C": {
+      "item": "ironbackpacks:upgrade"
+    }
+  },
+  "result": {
+    "id": "ironbackpacks:upgrade",
+    "count": 1,
+    "components": {
+      "ironbackpacks:upgrade": "ironbackpacks:damage_bar"
+    }
+  }
+}

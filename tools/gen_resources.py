@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Builds src/main/resources/{assets,data} for the 1.21.1 port from the original Iron Backpacks 1.12.2 resources.
 
-    python3 -I tools/gen_resources.py <IronBackpacks 1.12 checkout>/src/main/resources/assets/ironbackpacks src/main/resources
+    python3 -I tools/gen_resources.py <IronBackpacks 1.12 checkout>/src/main/resources/assets/ironbackpacks common/src/main/resources
 
 Copies the textures, sounds and logo the 1.12.2 mod used (textures/items -> textures/item for the item atlas),
 converts the .lang files to .json (only the keys 1.12.2 still used; item and upgrade keys lose their ".name"),
@@ -49,6 +49,8 @@ for s in ("open_backpack_sound", "close_backpack_sound"):
 shutil.copyfile(src / "sounds.json", A / "sounds.json")
 res.mkdir(parents=True, exist_ok=True)
 shutil.copyfile(src / "logo.png", res / f"{MOD}_logo.png")
+# the square icon (Fabric's mod list): art/logoOverlappingPacks.png of the 1.12 repo
+shutil.copyfile(src.parents[4] / "art/logoOverlappingPacks.png", res / f"{MOD}_icon.png")
 
 # --- lang ---------------------------------------------------------------------------------------------------------
 LANGS = {"en_US": "en_us", "de_DE": "de_de", "es_SP": "es_es", "sv_SE": "sv_se", "zh_CN": "zh_cn"}
@@ -153,7 +155,8 @@ for k, v in RUSSIAN.items():
 write(A / "lang/ru_ru.json", dict(sorted(RUSSIAN.items())))
 
 # --- item models --------------------------------------------------------------------------------------------------
-# property ironbackpacks:variant (client/ClientEventHandler.VARIANT_MODELS): 0 = no / unknown variant ("Torn Backpack")
+# property ironbackpacks:variant (client/ClientEventHandler.VARIANT_MODELS): 0 = no / unknown variant ("Torn Backpack"),
+# then 0.1, 0.2, ... (item properties are clamped to 0..1)
 VARIANTS = [("basic", "none"), ("iron", "storage"), ("iron", "upgrade"), ("gold", "storage"), ("gold", "upgrade"),
             ("diamond", "storage"), ("diamond", "upgrade")]
 
@@ -168,9 +171,9 @@ write(A / "models/item/backpack/null.json", layered("basic", "dark"))
 for t, spec in VARIANTS:
     write(A / f"models/item/backpack/{t}/{spec}.json", layered(t, "dark" if spec == "upgrade" else "light"))
 write(A / "models/item/backpack.json", dict(layered("basic", "dark"), overrides=[
-    {"predicate": {f"{MOD}:variant": i + 1}, "model": f"{MOD}:item/backpack/{t}/{spec}"} for i, (t, spec) in enumerate(VARIANTS)]))
+    {"predicate": {f"{MOD}:variant": (i + 1) / 10}, "model": f"{MOD}:item/backpack/{t}/{spec}"} for i, (t, spec) in enumerate(VARIANTS)]))
 
-# property ironbackpacks:upgrade (client/ClientEventHandler.UPGRADE_MODELS): 0 = blank / unknown upgrade
+# property ironbackpacks:upgrade (client/ClientEventHandler.UPGRADE_MODELS): 0 = blank / unknown upgrade, then 0.1, 0.2, ...
 UPGRADES = ["damage_bar", "lock", "extra_upgrade", "everlasting"]
 
 
@@ -182,7 +185,7 @@ write(A / "models/item/upgrade/null.json", flat(UPGRADE_TEX["null"]))
 for u in UPGRADES:
     write(A / f"models/item/upgrade/{u}.json", flat(UPGRADE_TEX[u]))
 write(A / "models/item/upgrade.json", dict(flat(UPGRADE_TEX["null"]), overrides=[
-    {"predicate": {f"{MOD}:upgrade": i + 1}, "model": f"{MOD}:item/upgrade/{u}"} for i, u in enumerate(UPGRADES)]))
+    {"predicate": {f"{MOD}:upgrade": (i + 1) / 10}, "model": f"{MOD}:item/upgrade/{u}"} for i, u in enumerate(UPGRADES)]))
 
 # --- recipes (core/RecipesIronBackpacks.java) ---------------------------------------------------------------------
 TAG = {"wool": {"tag": "minecraft:wool"}, "leather": {"tag": "c:leathers"}, "chestWood": {"tag": "c:chests/wooden"},
@@ -192,12 +195,19 @@ TAG = {"wool": {"tag": "minecraft:wool"}, "leather": {"tag": "c:leathers"}, "che
        "water_bucket": {"item": "minecraft:water_bucket"}}
 
 
+# The backpack slot holds the plain backpack item; the recipe's "input_backpack" says which tier / specialty it must be
+# (checked by the recipe, so the JSON is the same on NeoForge and Fabric).
+BACKPACK = {"item": f"{MOD}:backpack"}
+
+
 def backpack(t, spec):
-    return {"type": f"{MOD}:backpack", "backpack_type": f"{MOD}:{t}", "specialty": spec}
+    return {"backpack_type": f"{MOD}:{t}", "specialty": spec}
 
 
 def upgrade_enabled(u):
-    return [{"type": f"{MOD}:upgrade_enabled", "upgrade": f"{MOD}:{u}"}]
+    # both loaders' recipe conditions; each one ignores the other's key
+    return {"neoforge:conditions": [{"type": f"{MOD}:upgrade_enabled", "upgrade": f"{MOD}:{u}"}],
+            "fabric:load_conditions": [{"condition": f"{MOD}:upgrade_enabled", "upgrade": f"{MOD}:{u}"}]}
 
 
 R = D / "recipe"
@@ -205,24 +215,26 @@ for f in R.glob("*.json") if R.exists() else []:
     f.unlink()
 
 
-def tier(name, t, spec, pattern, key):
-    write(R / f"{name}.json", {"type": f"{MOD}:backpack_tier", "category": "misc", "pattern": pattern,
-                               "key": key, "backpack_type": f"{MOD}:{t}", "specialty": spec})
+def tier(name, t, spec, pattern, key, input_backpack=None):
+    r = {"type": f"{MOD}:backpack_tier", "category": "misc", "pattern": pattern, "key": key, "backpack_type": f"{MOD}:{t}", "specialty": spec}
+    if input_backpack:
+        r["input_backpack"] = input_backpack
+    write(R / f"{name}.json", r)
 
 
 tier("pack_basic", "basic", "none", ["WLW", "LCL", "WLW"], {"W": TAG["wool"], "L": TAG["leather"], "C": TAG["chestWood"]})
 for t, prev, metal in (("iron", None, "ingotIron"), ("gold", "iron", "ingotGold")):
     for spec, c in (("storage", TAG["chestWood"]), ("upgrade", TAG["upgrade"])):
         b = backpack("basic", "none") if prev is None else backpack(prev, spec)
-        tier(f"pack_{t}_{spec}", t, spec, ["ICI", "IBI", "III"], {"I": TAG[metal], "B": b, "C": c})
+        tier(f"pack_{t}_{spec}", t, spec, ["ICI", "IBI", "III"], {"I": TAG[metal], "B": BACKPACK, "C": c}, b)
 for spec, c in (("storage", TAG["chestWood"]), ("upgrade", TAG["upgrade"])):
-    tier(f"pack_diamond_{spec}", "diamond", spec, ["DDD", "CBC", "DDD"], {"D": TAG["gemDiamond"], "B": backpack("gold", spec), "C": c})
+    tier(f"pack_diamond_{spec}", "diamond", spec, ["DDD", "CBC", "DDD"], {"D": TAG["gemDiamond"], "B": BACKPACK, "C": c}, backpack("gold", spec))
 
 
 def shaped(name, result, pattern, key, conditions=None):
     r = {"type": "minecraft:crafting_shaped", "category": "misc", "pattern": pattern, "key": key, "result": result}
     if conditions:
-        r = {"neoforge:conditions": conditions, **r}
+        r = {**conditions, **r}
     write(R / f"{name}.json", r)
 
 
@@ -243,7 +255,8 @@ COLOR = [("pack_basic", ("basic", "none"), ("basic", "none")),
 for operation, d in (("color", TAG["dye"]), ("decolor", TAG["water_bucket"])):
     for name, (rt, rs), (it, isp) in COLOR:
         write(R / f"{name}_{operation}.json", {"type": f"{MOD}:backpack_color", "category": "misc", "pattern": ["BD"],
-                                               "key": {"B": backpack(it, isp), "D": d}, "backpack_type": f"{MOD}:{rt}", "specialty": rs})
+                                               "key": {"B": BACKPACK, "D": d}, "backpack_type": f"{MOD}:{rt}", "specialty": rs,
+                                               "input_backpack": backpack(it, isp)})
 
 
 # --- game test area ---------------------------------------------------------------------------------------------

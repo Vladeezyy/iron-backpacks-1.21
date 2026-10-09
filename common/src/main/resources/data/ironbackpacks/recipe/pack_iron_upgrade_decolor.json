@@ -1,0 +1,21 @@
+{
+  "type": "ironbackpacks:backpack_color",
+  "category": "misc",
+  "pattern": [
+    "BD"
+  ],
+  "key": {
+    "B": {
+      "item": "ironbackpacks:backpack"
+    },
+    "D": {
+      "item": "minecraft:water_bucket"
+    }
+  },
+  "backpack_type": "ironbackpacks:iron",
+  "specialty": "upgrade",
+  "input_backpack": {
+    "backpack_type": "ironbackpacks:iron",
+    "specialty": "upgrade"
+  }
+}

@@ -58,3 +58,20 @@ the usual 1.21.1 NeoForge modpack setups (`-PcompatMods=curios` / `-PcompatMods=
 runs only): all GameTests pass, the scene runs, the backpack GUI and the player inventory (with their slot buttons)
 look right. The only conflict was the H key above. The GameTests' mock players now get NeoForge's mock connection
 (`NetworkRegistry.configureMockConnection`), so other mods' join packets and the menu packet go through.
+
+## 2026-10-09 — Fabric (1.0.1)
+The project is split like the MultiLoader template: `common` (all game code, compiled against vanilla through
+NeoForm), `neoforge` and `fabric` (entry points and `IPlatform`: registration, the custom registries, the menu type
+and opening, networking, the equipped-backpack data, the config, the mock connection for tests).
+- Fabric has no anvil or item-expiry events: mixins into AnvilMenu (createResult, onTake: no anvil damage, like the
+  1.12 AnvilRepairEvent's break chance 0) and ItemEntity.tick call the same logic as the NeoForge events.
+- Fabric's config is `config/ironbackpacks-startup.json` (the upgrade switches); NeoForge keeps its startup toml.
+- The recipes no longer use a NeoForge custom ingredient: the backpack slot is the plain backpack item and the
+  recipe's `input_backpack` (tier + specialty) is checked in `matches`, so the JSON is the same on both loaders; the
+  upgrade recipes carry both loaders' conditions (`neoforge:conditions`, `fabric:load_conditions`).
+- The backpack inventory is a vanilla container (BackpackInventory) instead of NeoForge's ItemStackHandler; dye
+  colours come from dye items or `c:dyes/<colour>` tags (NeoForge's DyeColor.getColor did the same).
+- The item model properties are index / 10 (0.1, 0.2, ...): item properties are clamped to 0..1.
+- JEI 19.56 on Fabric (19.57 is built with a Loom that needs Java 25 for Gradle).
+- Tests: 17 GameTests on both loaders, plus `:fabric:prodGametest`, which runs them with the release jar on a real
+  Fabric server (with the fabric-gametest module, which the Fabric API bundle doesn't include).

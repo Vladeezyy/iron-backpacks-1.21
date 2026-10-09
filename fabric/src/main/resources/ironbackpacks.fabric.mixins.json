@@ -1,0 +1,10 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "gr8pefish.ironbackpacks.fabric.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": ["AnvilMenuMixin", "ItemEntityMixin"],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

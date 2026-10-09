@@ -1,0 +1,26 @@
+{
+  "type": "ironbackpacks:backpack_tier",
+  "category": "misc",
+  "pattern": [
+    "ICI",
+    "IBI",
+    "III"
+  ],
+  "key": {
+    "I": {
+      "tag": "c:ingots/gold"
+    },
+    "B": {
+      "item": "ironbackpacks:backpack"
+    },
+    "C": {
+      "tag": "c:chests/wooden"
+    }
+  },
+  "backpack_type": "ironbackpacks:gold",
+  "specialty": "storage",
+  "input_backpack": {
+    "backpack_type": "ironbackpacks:iron",
+    "specialty": "storage"
+  }
+}
