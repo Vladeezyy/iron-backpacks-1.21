@@ -67,9 +67,16 @@ public final class DevScene {
             at(t + 20, mc -> shot(mc, "gui_" + name));
             at(t + 25, mc -> mc.player.closeContainer());
         }
-        at(330, mc -> mc.setScreen(new Showcase(packWithUpgrades())));
-        at(340, mc -> shot(mc, "tooltip"));
-        at(345, mc -> mc.setScreen(null));
+        at(320, mc -> mc.setScreen(new Showcase(packWithUpgrades())));
+        at(326, mc -> shot(mc, "tooltip"));
+        at(328, mc -> ClientEventHandler.sceneShift = true);
+        at(334, mc -> shot(mc, "tooltip_shift"));
+        at(336, mc -> mc.setScreen(new Showcase(upgrade("everlasting"))));
+        at(342, mc -> shot(mc, "tooltip_upgrade"));
+        at(344, mc -> ClientEventHandler.sceneShift = false);
+        at(345, mc -> mc.setScreen(new Lineup()));
+        at(348, mc -> shot(mc, "lineup"));
+        at(349, mc -> mc.setScreen(null));
         at(350, mc -> server(mc, DevScene::openAnvil));
         at(370, mc -> shot(mc, "anvil"));
         at(375, mc -> mc.player.closeContainer());
@@ -126,7 +133,7 @@ public final class DevScene {
     }
 
     /** A backpack with some things in it (the first slots) and an optional colour. */
-    private static ItemStack filled(ItemStack stack, int color, ItemStack... contents) {
+    static ItemStack filled(ItemStack stack, int color, ItemStack... contents) {
         BackpackInfo info = BackpackInfo.fromStack(stack);
         for (int i = 0; i < contents.length && i < info.getInventory().getSlots(); i++)
             info.getInventory().setStackInSlot(i, contents[i]);
@@ -235,6 +242,63 @@ public final class DevScene {
             g.renderItem(stack, width / 2 - 100, height / 2 - 40);
             g.renderItemDecorations(font, stack, width / 2 - 100, height / 2 - 40);
             g.renderTooltip(font, stack, width / 2 - 80, height / 2 - 40);
+        }
+
+        @Override
+        public boolean isPauseScreen() {
+            return false;
+        }
+    }
+
+    /** Every backpack variant, then dyed ones and the upgrades, drawn large with their names. */
+    private static final class Lineup extends Screen {
+        Lineup() {
+            super(Component.empty());
+        }
+
+        private static ItemStack dyed(String type, BackpackSpecialty specialty, DyeColor color) {
+            return filled(pack(type, specialty), color.getTextureDiffuseColor() & 0xFFFFFF);
+        }
+
+        @Override
+        public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+            g.fill(0, 0, width, height, 0xFF20242C);
+            ItemStack[][] rows = {
+                    {pack("basic", BackpackSpecialty.NONE), pack("iron", BackpackSpecialty.STORAGE), pack("iron", BackpackSpecialty.UPGRADE),
+                            pack("gold", BackpackSpecialty.STORAGE), pack("gold", BackpackSpecialty.UPGRADE), pack("diamond", BackpackSpecialty.STORAGE),
+                            pack("diamond", BackpackSpecialty.UPGRADE)},
+                    {dyed("basic", BackpackSpecialty.NONE, DyeColor.RED), dyed("iron", BackpackSpecialty.STORAGE, DyeColor.ORANGE),
+                            dyed("iron", BackpackSpecialty.UPGRADE, DyeColor.YELLOW), dyed("gold", BackpackSpecialty.STORAGE, DyeColor.LIME),
+                            dyed("gold", BackpackSpecialty.UPGRADE, DyeColor.LIGHT_BLUE), dyed("diamond", BackpackSpecialty.STORAGE, DyeColor.PURPLE),
+                            dyed("diamond", BackpackSpecialty.UPGRADE, DyeColor.MAGENTA)},
+                    {new ItemStack(RegistrarIronBackpacks.UPGRADE.get()), upgrade("damage_bar"), upgrade("lock"), upgrade("extra_upgrade"),
+                            upgrade("everlasting")}};
+            int scale = 3, cell = 34 * scale / 2, top = height / 2 - 3 * cell / 2 - 10;
+            for (int r = 0; r < rows.length; r++) {
+                int rowCell = r == 2 ? cell * 3 / 2 : cell;   // the upgrade names are longer
+                int left = width / 2 - rows[r].length * rowCell / 2;
+                for (int i = 0; i < rows[r].length; i++) {
+                    ItemStack stack = rows[r][i];
+                    int x = left + i * rowCell + (rowCell - cell) / 2, y = top + r * (cell + 14);
+                    g.pose().pushPose();
+                    g.pose().translate(x + (cell - 16 * scale) / 2f, y, 0);
+                    g.pose().scale(scale, scale, 1);
+                    g.renderItem(stack, 0, 0);
+                    g.pose().popPose();
+                    if (r == 0 || r == 2) {
+                        Component name = stack.getHoverName();
+                        var variant = BackpackInfo.fromStack(stack).getVariant();
+                        Component spec = r == 0 && variant.getBackpackType().hasSpecialties()
+                                ? Component.translatable("tooltip.ironbackpacks.backpack.emphasis." + variant.getBackpackSpecialty().getName()) : null;
+                        g.pose().pushPose();
+                        g.pose().translate(x + cell / 2f, y + 16 * scale + 2, 0);
+                        g.pose().scale(0.5f, 0.5f, 1);
+                        g.drawCenteredString(font, name, 0, 0, 0xFFFFFF);
+                        if (spec != null) g.drawCenteredString(font, spec, 0, 10, 0xA0A0A0);
+                        g.pose().popPose();
+                    }
+                }
+            }
         }
 
         @Override

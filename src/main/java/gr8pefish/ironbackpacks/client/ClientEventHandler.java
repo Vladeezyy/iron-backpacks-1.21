@@ -97,9 +97,12 @@ public class ClientEventHandler {
         }
     }
 
+    /** Set by the DevScene to screenshot the shift tooltips. */
+    static boolean sceneShift;
+
     /** 1.12 Keyboard.isKeyDown(Keyboard.KEY_LSHIFT). */
     public static boolean isLeftShiftDown() {
-        return InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT);
+        return sceneShift || InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT);
     }
 
     /** 1.12 FontRenderer.listFormattedStringToWidth. */
