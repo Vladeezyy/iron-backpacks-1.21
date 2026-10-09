@@ -37,9 +37,9 @@ the JEI tier category and subtypes. 17 GameTests; the DevScene screenshots every
   capability (nothing read it).
 - Everlasting: 6000 ticks extra life and an unlimited lifetime (1.12 setNoDespawn + cancelled expiry; 1.21's
   expiry event can't be cancelled).
+- The (disabled) Equip/Unequip key is unbound by default: 1.12's H is the "open accessories" key of Accessories, a
+  common modpack mod, and the conflict showed in the controls screen.
 - Extra tooltip lines are gray, as 1.12's tooltip renderer drew them.
-- GameTests open the backpack menu locally through `ContainerBackpack.opener` (mock players can't receive the
-  NeoForge open-screen packet).
 
 - Every tier can be dyed (user request). 1.12.2 wrote the gold and diamond colour recipes with PACK_BASIC: they asked
   for a basic backpack with a storage / upgrade emphasis, which can't exist, so only basic and iron backpacks could
@@ -50,4 +50,11 @@ the JEI tier category and subtypes. 17 GameTests; the DevScene screenshots every
 - Crafting the next tier loses the colour (BackpackInfo.upgradeTo doesn't copy it).
 - The Everlasting upgrade has no recipe.
 - Any upgrade (not only a blank one) works as the "blank upgrade" ingredient.
-- The equip key is registered but does nothing ("Equip/Unequip Backpack (Disabled)").
+- The equip key is registered but does nothing ("Equip/Unequip Backpack (Disabled)"), now unbound by default.
+
+## 2026-10-09 — compatibility with accessory slot mods
+Checked with Curios API 9.5.1 and with Accessories 1.1.0-beta.53 + owo-lib + Accessories Compatibility Layer (+ Curios),
+the usual 1.21.1 NeoForge modpack setups (`-PcompatMods=curios` / `-PcompatMods=accessories` adds them to the dev
+runs only): all GameTests pass, the scene runs, the backpack GUI and the player inventory (with their slot buttons)
+look right. The only conflict was the H key above. The GameTests' mock players now get NeoForge's mock connection
+(`NetworkRegistry.configureMockConnection`), so other mods' join packets and the menu packet go through.

@@ -41,8 +41,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public class ClientEventHandler {
 
     public static final String CATEGORY = "key.categories." + IronBackpacks.MODID;
+    /** Disabled in 1.12.2 (does nothing); unbound by default here, 1.12's H is Accessories' "open accessories" key. */
     public static final KeyMapping KEY_EQUIP = new KeyMapping("key." + IronBackpacks.MODID + ".equip", KeyConflictContext.IN_GAME, KeyModifier.NONE,
-            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H, CATEGORY);
+            InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), CATEGORY);
     public static final KeyMapping KEY_OPEN = new KeyMapping("key." + IronBackpacks.MODID + ".open", KeyConflictContext.IN_GAME, KeyModifier.NONE,
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_I, CATEGORY);
 

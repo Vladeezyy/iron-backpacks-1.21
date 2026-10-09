@@ -29,6 +29,11 @@ sourceSets.main.resources {
 repositories {
     // JEI
     maven { url = "https://maven.blamejared.com/" }
+    // compatibility checks with other mods (-PcompatMods=...), dev runs only
+    maven {
+        url = "https://api.modrinth.com/maven"
+        content { includeGroup "maven.modrinth" }
+    }
 }
 
 base {
@@ -127,6 +132,18 @@ dependencies {
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
     // We add the full version to localRuntime, not runtimeOnly, so that we do not publish a dependency on it
     localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+
+    // Compatibility checks in the dev runs, never in the jar: -PcompatMods=curios or -PcompatMods=accessories
+    // (Accessories with its Curios compatibility layer, the usual modpack setup)
+    def compatMods = (project.findProperty('compatMods') ?: '').split(',').findAll { it }
+    if ('curios' in compatMods || 'accessories' in compatMods) {
+        localRuntime "maven.modrinth:curios:9.5.1+1.21.1"
+    }
+    if ('accessories' in compatMods) {
+        localRuntime "maven.modrinth:accessories:1.1.0-beta.53+1.21.1"
+        localRuntime "maven.modrinth:owo-lib:0.12.15.5-beta.1+1.21"
+        localRuntime "maven.modrinth:accessories-compat-layer:0.1.12"
+    }
 
     // Example mod dependency using a mod jar from ./libs with a flat dir repository
     // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar

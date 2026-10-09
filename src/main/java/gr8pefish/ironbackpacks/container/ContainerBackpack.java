@@ -97,18 +97,11 @@ public class ContainerBackpack extends AbstractContainerMenu {
         if (selected.isEmpty())
             return;
 
-        opener.open(player, new SimpleMenuProvider((windowId, inventory, p) -> create(windowId, p, mode, hand), selected.getHoverName()), buf -> {
+        player.openMenu(new SimpleMenuProvider((windowId, inventory, p) -> create(windowId, p, mode, hand), selected.getHoverName()), buf -> {
             buf.writeEnum(mode);
             buf.writeEnum(hand);
         });
     }
-
-    /** How a backpack menu is opened: {@link ServerPlayer#openMenu} (the GameTests' mock players open it locally). */
-    public interface Opener {
-        void open(ServerPlayer player, net.minecraft.world.MenuProvider provider, java.util.function.Consumer<RegistryFriendlyByteBuf> extraData);
-    }
-
-    public static Opener opener = (player, provider, extraData) -> player.openMenu(provider, extraData);
 
     @Nonnull
     public static ContainerBackpack fromNetwork(int windowId, @Nonnull Inventory inventory, @Nonnull RegistryFriendlyByteBuf buf) {

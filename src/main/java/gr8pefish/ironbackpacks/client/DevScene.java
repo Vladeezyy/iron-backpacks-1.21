@@ -76,7 +76,17 @@ public final class DevScene {
         at(380, mc -> openJei());
         at(400, mc -> shot(mc, "jei_tier"));
         at(405, mc -> mc.setScreen(null));
-        at(420, mc -> mc.stop());
+        // other mods' inventory additions (Curios / Accessories slots) next to the backpacks, and key conflicts
+        at(410, mc -> server(mc, p -> p.setGameMode(GameType.SURVIVAL)));
+        at(420, mc -> mc.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player)));
+        at(435, mc -> shot(mc, "player_inventory"));
+        at(440, mc -> mc.setScreen(null));
+        at(445, DevScene::logKeyConflicts);
+        at(450, mc -> select(mc, 1));
+        at(455, mc -> server(mc, p -> ContainerBackpack.open(p, ContainerBackpack.Mode.HELD, InteractionHand.MAIN_HAND)));
+        at(470, mc -> shot(mc, "gui_survival"));
+        at(475, mc -> mc.player.closeContainer());
+        at(490, mc -> mc.stop());
     }
 
     private static void at(int t, Consumer<Minecraft> action) {
@@ -191,6 +201,17 @@ public final class DevScene {
             anvil.createResult();
             anvil.broadcastChanges();
         }
+    }
+
+    /** Every other key mapping bound to the same key as ours (default I / H). */
+    private static void logKeyConflicts(Minecraft mc) {
+        for (var ours : new net.minecraft.client.KeyMapping[] {ClientEventHandler.KEY_OPEN, ClientEventHandler.KEY_EQUIP}) {
+            for (var other : mc.options.keyMappings) {
+                if (other != ours && !ours.isUnbound() && other.getKey().equals(ours.getKey()))
+                    IronBackpacks.LOGGER.info("[scene] key conflict: {} and {} on {}", ours.getName(), other.getName(), ours.getKey().getName());
+            }
+        }
+        IronBackpacks.LOGGER.info("[scene] key check done");
     }
 
     private static void openJei() {

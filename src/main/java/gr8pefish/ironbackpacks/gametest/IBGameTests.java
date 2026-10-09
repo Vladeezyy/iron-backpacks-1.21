@@ -73,18 +73,6 @@ public final class IBGameTests {
         modBus.addListener(IBGameTests::registerTests);
     }
 
-    /** Mock players have no NeoForge channels for the menu packet: open the server side menu directly. */
-    private static void openLocally() {
-        ContainerBackpack.opener = (player, provider, extraData) -> {
-            if (!(player.connection.getConnection().channel() instanceof io.netty.channel.embedded.EmbeddedChannel)) {
-                player.openMenu(provider, extraData);
-                return;
-            }
-            player.closeContainer();
-            var menu = provider.createMenu(1, player.getInventory(), player);
-            if (menu != null) player.containerMenu = menu;
-        };
-    }
 
     private static void registerTests(RegisterGameTestsEvent event) {
         event.register(IBGameTests.class);
@@ -92,7 +80,6 @@ public final class IBGameTests {
 
     @GameTestGenerator
     public static Collection<TestFunction> generate() {
-        openLocally();
         List<TestFunction> functions = new ArrayList<>();
         TESTS.forEach((name, body) -> functions.add(new TestFunction(IronBackpacks.MODID, IronBackpacks.MODID + "." + name, STRUCTURE,
                 net.minecraft.world.level.block.Rotation.NONE, 100, 0, true, false, 1, 1, false, body)));
@@ -112,6 +99,8 @@ public final class IBGameTests {
         ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), cookie.gameProfile(), cookie.clientInformation());
         var connection = new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
         new io.netty.channel.embedded.EmbeddedChannel(connection);
+        // a NeoForge client with every mod's channels, so menus and other mods' sync packets can be sent
+        net.neoforged.neoforge.network.registration.NetworkRegistry.configureMockConnection(connection);
         helper.getLevel().getServer().getPlayerList().placeNewPlayer(connection, player, cookie);
         player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
         var pos = helper.absolutePos(new BlockPos(2, 1, 2)).getBottomCenter();
