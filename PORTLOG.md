@@ -41,9 +41,12 @@ the JEI tier category and subtypes. 17 GameTests; the DevScene screenshots every
 - GameTests open the backpack menu locally through `ContainerBackpack.opener` (mock players can't receive the
   NeoForge open-screen packet).
 
+- Every tier can be dyed (user request). 1.12.2 wrote the gold and diamond colour recipes with PACK_BASIC: they asked
+  for a basic backpack with a storage / upgrade emphasis, which can't exist, so only basic and iron backpacks could
+  be dyed.
+- Russian translation (`ru_ru`, user request); 1.12.2 had none. It lives in tools/gen_resources.py like the rest.
+
 ### 1.12.2 quirks kept
-- The gold and diamond colour recipes were written with PACK_BASIC: they ask for a basic backpack with a storage /
-  upgrade emphasis, which can't exist, so only basic and iron backpacks can be dyed.
 - Crafting the next tier loses the colour (BackpackInfo.upgradeTo doesn't copy it).
 - The Everlasting upgrade has no recipe.
 - Any upgrade (not only a blank one) works as the "blank upgrade" ingredient.

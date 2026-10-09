@@ -112,6 +112,46 @@ for old, new in LANGS.items():
     entries = {k: v for k, v in entries.items() if k in used and placeholders(v) == placeholders(english.get(k, v))}
     write(A / f"lang/{new}.json", dict(sorted(entries.items())))
 
+# Russian: not in 1.12.2, written for the port (user request)
+RUSSIAN = {
+    "container.ironbackpacks.backpack": "Открыть рюкзак",
+    "item.ironbackpacks.backpack": "Порванный рюкзак",
+    "item.ironbackpacks.backpack.ironbackpacks.basic": "Базовый рюкзак",
+    "item.ironbackpacks.backpack.ironbackpacks.iron": "Железный рюкзак",
+    "item.ironbackpacks.backpack.ironbackpacks.gold": "Золотой рюкзак",
+    "item.ironbackpacks.backpack.ironbackpacks.diamond": "Алмазный рюкзак",
+    "item.ironbackpacks.upgrade": "Пустое улучшение",
+    "itemGroup.ironbackpacks": "Iron Backpacks",
+    "jei.description.shapedCrafting": "Крафт по форме",
+    "jei.ironbackpacks.increaseTier.name": "Повышение тира рюкзака",
+    "jei.ironbackpacks.increaseTier.desc": "Чтобы повысить тир рюкзака, просто следуйте нужному §2рецепту крафта§r. При улучшении, возможно, "
+                                           "придётся выбирать между разными видами рюкзаков. Выбирайте с умом!",
+    "jei.ironbackpacks.increaseTier.desc2": "При переходе на новый тир все предметы, улучшения, настройки и т. д. прежнего рюкзака сохраняются!",
+    "key.categories.ironbackpacks": "Iron Backpacks",
+    "key.ironbackpacks.open": "Открыть рюкзак",
+    "key.ironbackpacks.equip": "Надеть/снять рюкзак (отключено)",
+    "tooltip.ironbackpacks.backpack.emphasis.storage": "Упор на хранение",
+    "tooltip.ironbackpacks.backpack.emphasis.upgrade": "Упор на улучшения",
+    "tooltip.ironbackpacks.backpack.tier": "Тир: %d",
+    "tooltip.ironbackpacks.backpack.upgrade.list": "Установленные улучшения:",
+    "tooltip.ironbackpacks.backpack.upgrade.used": "Использовано очков улучшений: %d/%d.",
+    "tooltip.ironbackpacks.shift": "Зажмите Shift, чтобы узнать больше",
+    "tooltip.ironbackpacks.upgrade.cost": "Стоимость: %d очк. улучшений",
+    "tooltip.ironbackpacks.upgrade.minimum_tier": "Минимальный тир: %d",
+    "upgrade.ironbackpacks.damage_bar": "Улучшение «Шкала заполненности»",
+    "upgrade.ironbackpacks.damage_bar.desc": "Добавляет полоску, по которой с первого взгляда видно, насколько заполнен рюкзак.",
+    "upgrade.ironbackpacks.lock": "Улучшение «Защёлка»",
+    "upgrade.ironbackpacks.lock.desc": "Открыть рюкзак может только его владелец.",
+    "upgrade.ironbackpacks.extra_upgrade": "Дополнительное очко улучшений",
+    "upgrade.ironbackpacks.extra_upgrade.desc": "Добавляет ещё одно очко улучшений.",
+    "upgrade.ironbackpacks.everlasting": "Улучшение «Вечность»",
+    "upgrade.ironbackpacks.everlasting.desc": "Выброшенный рюкзак не исчезает со временем.",
+}
+assert set(RUSSIAN) == set(english) & used | {"key.categories.ironbackpacks"}, set(english) & used ^ set(RUSSIAN)
+for k, v in RUSSIAN.items():
+    assert placeholders(v) == placeholders(english.get(k, v)), k
+write(A / "lang/ru_ru.json", dict(sorted(RUSSIAN.items())))
+
 # --- item models --------------------------------------------------------------------------------------------------
 # property ironbackpacks:variant (client/ClientEventHandler.VARIANT_MODELS): 0 = no / unknown variant ("Torn Backpack")
 VARIANTS = [("basic", "none"), ("iron", "storage"), ("iron", "upgrade"), ("gold", "storage"), ("gold", "upgrade"),
@@ -193,12 +233,13 @@ for name, u, m in (("upgrade_damage_bar", "damage_bar", TAG["bowl"]), ("upgrade_
     shaped(name, {"id": f"{MOD}:upgrade", "count": 1, "components": {f"{MOD}:upgrade": f"{MOD}:{u}"}}, ["MSM", "SCS", "MSM"],
            {"M": m, "S": TAG["string"], "C": TAG["upgrade"]}, upgrade_enabled(u))
 
-# Color and decolor. 1.12.2 quirk kept: the gold and diamond entries were written with PACK_BASIC, so they ask for a
-# basic backpack with a storage / upgrade emphasis (which can't exist) and never match.
+# Color and decolor. 1.12.2 wrote the gold and diamond entries with PACK_BASIC (a basic backpack with a storage /
+# upgrade emphasis, which can't exist), so only basic and iron backpacks could be dyed; fixed for the port (user
+# request): every tier can be dyed.
 COLOR = [("pack_basic", ("basic", "none"), ("basic", "none")),
          ("pack_iron_storage", ("iron", "storage"), ("iron", "storage")), ("pack_iron_upgrade", ("iron", "upgrade"), ("iron", "upgrade")),
-         ("pack_gold_storage", ("basic", "storage"), ("basic", "storage")), ("pack_gold_upgrade", ("basic", "upgrade"), ("basic", "upgrade")),
-         ("pack_diamond_storage", ("basic", "storage"), ("basic", "storage")), ("pack_diamond_upgrade", ("basic", "upgrade"), ("basic", "upgrade"))]
+         ("pack_gold_storage", ("gold", "storage"), ("gold", "storage")), ("pack_gold_upgrade", ("gold", "upgrade"), ("gold", "upgrade")),
+         ("pack_diamond_storage", ("diamond", "storage"), ("diamond", "storage")), ("pack_diamond_upgrade", ("diamond", "upgrade"), ("diamond", "upgrade"))]
 for operation, d in (("color", TAG["dye"]), ("decolor", TAG["water_bucket"])):
     for name, (rt, rs), (it, isp) in COLOR:
         write(R / f"{name}_{operation}.json", {"type": f"{MOD}:backpack_color", "category": "misc", "pattern": ["BD"],

@@ -151,9 +151,9 @@ public final class DevScene {
         inv.setItem(1, filled(pack("iron", BackpackSpecialty.STORAGE), DyeColor.RED.getTextureDiffuseColor() & 0xFFFFFF,
                 new ItemStack(Items.IRON_INGOT, 32), new ItemStack(Items.COAL, 64), new ItemStack(Items.REDSTONE, 40)));
         inv.setItem(2, filled(pack("iron", BackpackSpecialty.UPGRADE), DyeColor.LIGHT_BLUE.getTextureDiffuseColor() & 0xFFFFFF, new ItemStack(Items.BREAD, 16)));
-        inv.setItem(3, filled(pack("gold", BackpackSpecialty.STORAGE), -1, new ItemStack(Items.GOLD_INGOT, 20), new ItemStack(Items.DIAMOND, 3)));
+        inv.setItem(3, filled(pack("gold", BackpackSpecialty.STORAGE), DyeColor.LIME.getTextureDiffuseColor() & 0xFFFFFF, new ItemStack(Items.GOLD_INGOT, 20), new ItemStack(Items.DIAMOND, 3)));
         inv.setItem(4, filled(pack("gold", BackpackSpecialty.UPGRADE), -1, new ItemStack(Items.OAK_LOG, 64)));
-        inv.setItem(5, filled(pack("diamond", BackpackSpecialty.STORAGE), -1, new ItemStack(Items.EMERALD, 9), new ItemStack(Items.ENDER_PEARL, 16)));
+        inv.setItem(5, filled(pack("diamond", BackpackSpecialty.STORAGE), DyeColor.PURPLE.getTextureDiffuseColor() & 0xFFFFFF, new ItemStack(Items.EMERALD, 9), new ItemStack(Items.ENDER_PEARL, 16)));
         inv.setItem(6, packWithUpgrades());
         inv.setItem(7, upgrade("damage_bar"));
         inv.setItem(8, new ItemStack(RegistrarIronBackpacks.UPGRADE.get()));

@@ -7,13 +7,13 @@
   "key": {
     "B": {
       "type": "ironbackpacks:backpack",
-      "backpack_type": "ironbackpacks:basic",
+      "backpack_type": "ironbackpacks:diamond",
       "specialty": "storage"
     },
     "D": {
       "item": "minecraft:water_bucket"
     }
   },
-  "backpack_type": "ironbackpacks:basic",
+  "backpack_type": "ironbackpacks:diamond",
   "specialty": "storage"
 }

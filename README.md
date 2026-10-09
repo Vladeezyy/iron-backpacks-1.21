@@ -3,7 +3,7 @@
 An unofficial port of [Iron Backpacks](https://github.com/gr8pefish/IronBackpacks) by gr8pefish and contributors
 from Minecraft 1.12.2 (version 3.0.8) to **Minecraft 1.21.1** on **NeoForge 21.1**.
 
-The port keeps the 1.12.2 behaviour, numbers, textures, sounds and translations. The 1.12.2 source is the
+The port keeps the 1.12.2 behaviour, numbers, textures, sounds and translations (plus a Russian one). The 1.12.2 source is the
 specification; every difference is listed in [PORTLOG.md](PORTLOG.md).
 
 ## Content
@@ -12,7 +12,7 @@ specification; every difference is listed in [PORTLOG.md](PORTLOG.md).
 | Backpacks | Basic (18 slots, 4 upgrade points); Iron, Gold and Diamond, each with a storage emphasis (more slots) or an upgrade emphasis (+5 points). Diamond storage holds 77 items (11x7). |
 | Tiers | Craft the next tier around the previous backpack: items, upgrades and owner carry over. |
 | Upgrades | Damage Bar (fill level), Latch (only the owner can open it), Extra Upgrade Point, Everlasting (a dropped backpack never despawns). Added on an anvil, the last one taken off with shears. |
-| Colours | Backpack + dye; a water bucket washes the colour out. |
+| Colours | Backpack + dye (every tier); a water bucket washes the colour out. |
 | Key | Open Backpack (default I): the held, offhand or first backpack in the inventory. |
 | Config | `config/ironbackpacks-startup.toml` (enable upgrades), `config/ironbackpacks/blacklist.json` (items that can't go in). |
 | JEI | "Increase Backpack Tier" category; backpack variants and upgrades are separate entries. |

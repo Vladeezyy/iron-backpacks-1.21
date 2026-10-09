@@ -200,7 +200,7 @@ public final class IBGameTests {
         helper.succeed();
     }
 
-    /** Backpack + dye colours it (dye RGB), + water bucket washes it; the gold / diamond colour recipes never match (1.12.2 typo). */
+    /** Backpack + dye colours it (dye RGB), + water bucket washes it; every tier. */
     private static void colorRecipes(GameTestHelper helper) {
         ItemStack basic = pack("basic", BackpackSpecialty.NONE);
         BackpackInfo info = BackpackInfo.fromStack(basic);
@@ -212,8 +212,13 @@ public final class IBGameTests {
         ItemStack washed = craft(helper, 2, 1, red, new ItemStack(Items.WATER_BUCKET));
         check(helper, !washed.isEmpty() && BackpackInfo.getColor(washed) == -1, "washed");
         check(helper, !craft(helper, 2, 1, pack("iron", BackpackSpecialty.UPGRADE), new ItemStack(Items.BLUE_DYE)).isEmpty(), "iron can be dyed");
-        check(helper, craft(helper, 2, 1, pack("gold", BackpackSpecialty.STORAGE), new ItemStack(Items.BLUE_DYE)).isEmpty(), "gold can't be dyed (1.12.2)");
-        check(helper, craft(helper, 2, 1, pack("diamond", BackpackSpecialty.UPGRADE), new ItemStack(Items.BLUE_DYE)).isEmpty(), "diamond can't be dyed (1.12.2)");
+        // 1.12.2 couldn't dye gold / diamond backpacks (PACK_BASIC typo); the port fixes it
+        ItemStack gold = craft(helper, 2, 1, pack("gold", BackpackSpecialty.STORAGE), new ItemStack(Items.BLUE_DYE));
+        check(helper, BackpackInfo.getColor(gold) == (DyeColor.BLUE.getTextureDiffuseColor() & 0xFFFFFF)
+                && BackpackInfo.fromStack(gold).getVariant().getBackpackType().getIdentifier().getPath().equals("gold"), "gold dyed");
+        ItemStack diamond = craft(helper, 2, 1, pack("diamond", BackpackSpecialty.UPGRADE), new ItemStack(Items.GREEN_DYE));
+        check(helper, BackpackInfo.getColor(diamond) == (DyeColor.GREEN.getTextureDiffuseColor() & 0xFFFFFF)
+                && BackpackInfo.fromStack(diamond).getVariant().getBackpackSpecialty() == BackpackSpecialty.UPGRADE, "diamond dyed");
         helper.succeed();
     }
 
