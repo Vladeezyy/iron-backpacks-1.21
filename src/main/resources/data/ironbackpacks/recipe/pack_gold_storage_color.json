@@ -1,0 +1,19 @@
+{
+  "type": "ironbackpacks:backpack_color",
+  "category": "misc",
+  "pattern": [
+    "BD"
+  ],
+  "key": {
+    "B": {
+      "type": "ironbackpacks:backpack",
+      "backpack_type": "ironbackpacks:basic",
+      "specialty": "storage"
+    },
+    "D": {
+      "tag": "c:dyes"
+    }
+  },
+  "backpack_type": "ironbackpacks:basic",
+  "specialty": "storage"
+}

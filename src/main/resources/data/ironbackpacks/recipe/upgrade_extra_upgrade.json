@@ -1,0 +1,33 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "ironbackpacks:upgrade_enabled",
+      "upgrade": "ironbackpacks:extra_upgrade"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "MSM",
+    "SCS",
+    "MSM"
+  ],
+  "key": {
+    "M": {
+      "tag": "c:leathers"
+    },
+    "S": {
+      "tag": "c:strings"
+    },
+    "C": {
+      "item": "ironbackpacks:upgrade"
+    }
+  },
+  "result": {
+    "id": "ironbackpacks:upgrade",
+    "count": 1,
+    "components": {
+      "ironbackpacks:upgrade": "ironbackpacks:extra_upgrade"
+    }
+  }
+}

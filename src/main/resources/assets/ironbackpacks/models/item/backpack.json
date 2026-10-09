@@ -1,0 +1,52 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "ironbackpacks:item/backpack_basic_base",
+    "layer1": "ironbackpacks:item/backpack_basic_border",
+    "layer2": "ironbackpacks:item/backpack_basic_latch_dark"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "ironbackpacks:variant": 1
+      },
+      "model": "ironbackpacks:item/backpack/basic/none"
+    },
+    {
+      "predicate": {
+        "ironbackpacks:variant": 2
+      },
+      "model": "ironbackpacks:item/backpack/iron/storage"
+    },
+    {
+      "predicate": {
+        "ironbackpacks:variant": 3
+      },
+      "model": "ironbackpacks:item/backpack/iron/upgrade"
+    },
+    {
+      "predicate": {
+        "ironbackpacks:variant": 4
+      },
+      "model": "ironbackpacks:item/backpack/gold/storage"
+    },
+    {
+      "predicate": {
+        "ironbackpacks:variant": 5
+      },
+      "model": "ironbackpacks:item/backpack/gold/upgrade"
+    },
+    {
+      "predicate": {
+        "ironbackpacks:variant": 6
+      },
+      "model": "ironbackpacks:item/backpack/diamond/storage"
+    },
+    {
+      "predicate": {
+        "ironbackpacks:variant": 7
+      },
+      "model": "ironbackpacks:item/backpack/diamond/upgrade"
+    }
+  ]
+}

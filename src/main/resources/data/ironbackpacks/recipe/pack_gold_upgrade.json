@@ -1,0 +1,24 @@
+{
+  "type": "ironbackpacks:backpack_tier",
+  "category": "misc",
+  "pattern": [
+    "ICI",
+    "IBI",
+    "III"
+  ],
+  "key": {
+    "I": {
+      "tag": "c:ingots/gold"
+    },
+    "B": {
+      "type": "ironbackpacks:backpack",
+      "backpack_type": "ironbackpacks:iron",
+      "specialty": "upgrade"
+    },
+    "C": {
+      "item": "ironbackpacks:upgrade"
+    }
+  },
+  "backpack_type": "ironbackpacks:gold",
+  "specialty": "upgrade"
+}

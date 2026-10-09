@@ -1,0 +1,19 @@
+{
+  "type": "ironbackpacks:backpack_color",
+  "category": "misc",
+  "pattern": [
+    "BD"
+  ],
+  "key": {
+    "B": {
+      "type": "ironbackpacks:backpack",
+      "backpack_type": "ironbackpacks:iron",
+      "specialty": "storage"
+    },
+    "D": {
+      "item": "minecraft:water_bucket"
+    }
+  },
+  "backpack_type": "ironbackpacks:iron",
+  "specialty": "storage"
+}

@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SPS",
+    "PWP",
+    "SPS"
+  ],
+  "key": {
+    "S": {
+      "tag": "c:strings"
+    },
+    "W": {
+      "tag": "c:rods/wooden"
+    },
+    "P": {
+      "item": "minecraft:paper"
+    }
+  },
+  "result": {
+    "id": "ironbackpacks:upgrade",
+    "count": 1
+  }
+}
