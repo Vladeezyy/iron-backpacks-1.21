@@ -3,7 +3,8 @@
 An unofficial port of [Iron Backpacks](https://github.com/gr8pefish/IronBackpacks) by gr8pefish and contributors
 from Minecraft 1.12.2 (version 3.0.8) to **Minecraft 1.21.1** on **NeoForge 21.1** and **Fabric**.
 
-The port keeps the 1.12.2 behaviour, numbers, textures, sounds and translations (plus a Russian one). The 1.12.2 source is the
+The port keeps the 1.12.2 behaviour, numbers, textures, sounds and translations (plus Russian, Ukrainian and Portuguese (Brazil) ones, and
+the German and Spanish strings 1.12.2 lacked). The 1.12.2 source is the
 specification; every difference is listed in [PORTLOG.md](PORTLOG.md).
 
 **Download:** [Modrinth](https://modrinth.com/mod/iron-backpacks) ·

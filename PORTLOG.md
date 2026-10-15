@@ -45,6 +45,9 @@ the JEI tier category and subtypes. 17 GameTests; the DevScene screenshots every
   for a basic backpack with a storage / upgrade emphasis, which can't exist, so only basic and iron backpacks could
   be dyed.
 - Russian translation (`ru_ru`, user request); 1.12.2 had none. It lives in tools/gen_resources.py like the rest.
+- Ukrainian (`uk_ua`) and Portuguese (Brazil) (`pt_br`) translations; 1.12.2 had none. German and Spanish get the
+  keys 1.12.2 lacked; the Spanish shift tooltip and tab name (machine-translated nonsense in 1.12.2) are replaced.
+  Written for the port, not by native speakers. Also in tools/gen_resources.py.
 
 ### 1.12.2 quirks kept
 - Crafting the next tier loses the colour (BackpackInfo.upgradeTo doesn't copy it).
