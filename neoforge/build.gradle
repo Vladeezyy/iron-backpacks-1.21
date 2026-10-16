@@ -33,6 +33,16 @@ neoForge {
             programArguments.addAll '--quickPlaySingleplayer', 'ib_scene'
             systemProperty 'ironbackpacks.scene', 'true'
         }
+        // Performance check (gr8pefish.ironbackpacks.client.PerfScene): FPS and server tick, backpacks against
+        // shulker boxes; -Pjfr records a flight recording to run/perf.jfr.
+        perf {
+            client()
+            programArguments.addAll '--quickPlaySingleplayer', 'ib_scene'
+            systemProperty 'ironbackpacks.perf', 'true'
+            if (project.hasProperty('jfr')) {
+                jvmArguments.add '-XX:StartFlightRecording=filename=perf.jfr,settings=profile'
+            }
+        }
     }
     mods {
         "${mod_id}" {

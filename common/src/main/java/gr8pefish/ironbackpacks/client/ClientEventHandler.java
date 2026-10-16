@@ -49,6 +49,7 @@ public class ClientEventHandler {
         else if (KEY_EQUIP.consumeClick() && false) // TODO - Use once backpack equipping has been fully implemented.
             Services.PLATFORM.sendToServer(new MessageRequestAction(RequestAction.EQUIP_BACKPACK));
         DevScene.onTick(mc);
+        PerfScene.onTick(mc);
     }
 
     /** Item property {@code ironbackpacks:variant}: which backpack model (the loaders register it at client setup; clamped to 0..1). */
