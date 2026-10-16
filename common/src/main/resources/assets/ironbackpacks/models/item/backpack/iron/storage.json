@@ -2,7 +2,6 @@
   "parent": "minecraft:item/generated",
   "textures": {
     "layer0": "ironbackpacks:item/backpack_iron_base",
-    "layer1": "ironbackpacks:item/backpack_iron_border",
-    "layer2": "ironbackpacks:item/backpack_iron_latch_light"
+    "layer1": "ironbackpacks:item/backpack_iron_trim_light"
   }
 }

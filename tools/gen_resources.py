@@ -28,6 +28,82 @@ def write(p, obj):
     p.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def read_png(path):
+    """RGBA pixels of an 8-bit (or palette 1/2/4/8-bit), non-interlaced PNG: (width, height, [[r, g, b, a], ...])."""
+    import zlib
+    data = Path(path).read_bytes()
+    pos, chunks = 8, {}
+    idat = b""
+    while pos < len(data):
+        length, kind = struct.unpack(">I4s", data[pos:pos + 8])
+        body = data[pos + 8:pos + 8 + length]
+        if kind == b"IDAT":
+            idat += body
+        else:
+            chunks[kind] = body
+        pos += 12 + length
+    w, h, depth, ctype, _, _, interlace = struct.unpack(">IIBBBBB", chunks[b"IHDR"])
+    assert interlace == 0 and (depth == 8 or ctype == 3), (path, depth, ctype)
+    channels = {0: 1, 2: 3, 3: 1, 4: 2, 6: 4}[ctype]
+    bpp = max(1, depth * channels // 8)
+    stride = (w * depth * channels + 7) // 8
+    raw = zlib.decompress(idat)
+    rows, prev, i = [], bytearray(stride), 0
+    for _ in range(h):
+        f, line = raw[i], bytearray(raw[i + 1:i + 1 + stride])
+        i += 1 + stride
+        for x in range(stride):
+            a = line[x - bpp] if x >= bpp else 0
+            b, c = prev[x], prev[x - bpp] if x >= bpp else 0
+            if f == 1: line[x] = (line[x] + a) & 255
+            elif f == 2: line[x] = (line[x] + b) & 255
+            elif f == 3: line[x] = (line[x] + (a + b) // 2) & 255
+            elif f == 4:
+                pa, pb, pc = abs(b - c), abs(a - c), abs(a + b - 2 * c)
+                line[x] = (line[x] + (a if pa <= pb and pa <= pc else b if pb <= pc else c)) & 255
+        rows.append(line)
+        prev = line
+    pal = chunks.get(b"PLTE", b"")
+    trns = chunks.get(b"tRNS", b"")
+    pixels = []
+    for line in rows:
+        for x in range(w):
+            if ctype == 3:
+                bit = x * depth
+                idx = (line[bit // 8] >> (8 - depth - bit % 8)) & ((1 << depth) - 1)
+                pixels.append([pal[3 * idx], pal[3 * idx + 1], pal[3 * idx + 2], trns[idx] if idx < len(trns) else 255])
+            elif ctype == 6:
+                pixels.append(list(line[4 * x:4 * x + 4]))
+            elif ctype == 2:
+                pixels.append(list(line[3 * x:3 * x + 3]) + [255])
+            elif ctype == 4:
+                pixels.append([line[2 * x]] * 3 + [line[2 * x + 1]])
+            else:
+                pixels.append([line[x]] * 3 + [255])
+    return w, h, pixels
+
+
+def write_png(path, w, h, pixels):
+    """An RGBA PNG (no filtering)."""
+    import zlib
+    raw = b"".join(b"\0" + bytes(v for p in pixels[y * w:(y + 1) * w] for v in p) for y in range(h))
+
+    def chunk(kind, body):
+        return struct.pack(">I", len(body)) + kind + body + struct.pack(">I", zlib.crc32(kind + body))
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    Path(path).write_bytes(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0))
+                           + chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b""))
+
+
+def over(top, bottom):
+    """Pixel 'top' drawn over 'bottom' (straight alpha)."""
+    ta, ba = top[3] / 255, bottom[3] / 255
+    a = ta + ba * (1 - ta)
+    if a == 0:
+        return [0, 0, 0, 0]
+    return [round((top[i] * ta + bottom[i] * ba * (1 - ta)) / a) for i in range(3)] + [round(a * 255)]
+
+
 def copy(rel_from, rel_to):
     (A / rel_to).parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(src / rel_from, A / rel_to)
@@ -303,10 +379,20 @@ VARIANTS = [("basic", "none"), ("iron", "storage"), ("iron", "upgrade"), ("gold"
             ("diamond", "storage"), ("diamond", "upgrade")]
 
 
+# The border and the latch (1.12 layers 1 and 2) are tinted with the same colour, so they are merged into one "trim"
+# texture: the same picture, but the item/generated model builds its pixel edges for two layers instead of three (a
+# third fewer vertices for every backpack drawn, in the GUI, in hands and on the ground).
+for t in TYPES:
+    for latch in ("dark", "light"):
+        w, h, border = read_png(A / f"textures/item/backpack_{t}_border.png")
+        lw, lh, top = read_png(A / f"textures/item/backpack_{t}_latch_{latch}.png")
+        assert (w, h) == (lw, lh)
+        write_png(A / f"textures/item/backpack_{t}_trim_{latch}.png", w, h, [over(a, b) for a, b in zip(top, border)])
+
+
 def layered(t, latch):
     return {"parent": "minecraft:item/generated", "textures": {
-        "layer0": f"{MOD}:item/backpack_{t}_base", "layer1": f"{MOD}:item/backpack_{t}_border",
-        "layer2": f"{MOD}:item/backpack_{t}_latch_{latch}"}}
+        "layer0": f"{MOD}:item/backpack_{t}_base", "layer1": f"{MOD}:item/backpack_{t}_trim_{latch}"}}
 
 
 write(A / "models/item/backpack/null.json", layered("basic", "dark"))

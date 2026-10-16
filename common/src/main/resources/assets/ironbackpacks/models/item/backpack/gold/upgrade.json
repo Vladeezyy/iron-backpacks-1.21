@@ -2,7 +2,6 @@
   "parent": "minecraft:item/generated",
   "textures": {
     "layer0": "ironbackpacks:item/backpack_gold_base",
-    "layer1": "ironbackpacks:item/backpack_gold_border",
-    "layer2": "ironbackpacks:item/backpack_gold_latch_dark"
+    "layer1": "ironbackpacks:item/backpack_gold_trim_dark"
   }
 }
