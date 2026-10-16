@@ -40,9 +40,13 @@ public class ItemBackpack extends Item implements IBackpack {
     @Nonnull
     @Override
     public String getDescriptionId(@Nonnull ItemStack stack) {
-        BackpackInfo backpackInfo = getBackpackInfo(stack);
-        return super.getDescriptionId(stack) + "." + backpackInfo.getVariant().getBackpackType().getIdentifier().toString().replace(":", ".");
+        // asked every frame for every dropped backpack (its name tag): the type only, the key built once per type
+        BackpackType type = BackpackInfo.headerOf(stack).getVariant().getBackpackType();
+        return DESCRIPTION_IDS.computeIfAbsent(type.getIdentifier(),
+                id -> super.getDescriptionId(stack) + "." + id.toString().replace(":", "."));
     }
+
+    private static final java.util.Map<net.minecraft.resources.ResourceLocation, String> DESCRIPTION_IDS = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Nonnull
     @Override
@@ -91,7 +95,8 @@ public class ItemBackpack extends Item implements IBackpack {
 
     @Override
     public boolean isBarVisible(@Nonnull ItemStack stack) {
-        return getBackpackInfo(stack).hasUpgrade(RegistrarIronBackpacks.get(RegistrarIronBackpacks.UPGRADE_DAMAGE_BAR));
+        // asked every frame for every backpack in a GUI: the upgrades only, not the inventory
+        return BackpackInfo.headerOf(stack).hasUpgrade(RegistrarIronBackpacks.get(RegistrarIronBackpacks.UPGRADE_DAMAGE_BAR));
     }
 
     /** 1.12 getDurabilityForDisplay: the free share of the backpack's total capacity (empty slots count as 64). */
@@ -99,16 +104,16 @@ public class ItemBackpack extends Item implements IBackpack {
         int total = 0;
         int full = 0;
 
-        BackpackInfo backpackInfo = getBackpackInfo(stack);
-        for (int i = 0; i < backpackInfo.getInventory().getSlots(); i++) {
-            ItemStack invStack = backpackInfo.getInventory().getStackInSlot(i);
-            if (!invStack.isEmpty()) {
-                full += invStack.getCount();
-                total += invStack.getMaxStackSize();
-            } else {
-                total += 64;
-            }
+        // read straight from the stored contents (asked twice per frame for a shown bar): no inventory copy
+        int slots = BackpackInfo.headerOf(stack).getVariant().getBackpackSize().getTotalSize();
+        int filled = 0;
+        for (ItemStack invStack : stack.getOrDefault(RegistrarIronBackpacks.PACK_INVENTORY.get(),
+                net.minecraft.world.item.component.ItemContainerContents.EMPTY).nonEmptyItems()) {
+            if (filled++ >= slots) break;
+            full += invStack.getCount();
+            total += invStack.getMaxStackSize();
         }
+        total += 64 * (slots - Math.min(filled, slots));
 
         return 1.0D - ((double) full / (double) total);
     }

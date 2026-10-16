@@ -304,6 +304,15 @@ public class BackpackInfo {
         return tagged.setInventory(stackHandler);
     }
 
+    /**
+     * The backpack's variant, owner, colour and upgrades without its inventory: for what is asked every frame (the
+     * item name of a dropped backpack, the durability bar). {@link #fromStack} also copies every stack inside.
+     */
+    @Nonnull
+    public static BackpackInfo headerOf(@Nonnull ItemStack stack) {
+        return fromData(stack.isEmpty() ? null : stack.get(RegistrarIronBackpacks.PACK_INFO.get()));
+    }
+
     @Nonnull
     public static BackpackInfo fromData(@Nullable Data data) {
         BackpackInfo backpackInfo = new BackpackInfo();

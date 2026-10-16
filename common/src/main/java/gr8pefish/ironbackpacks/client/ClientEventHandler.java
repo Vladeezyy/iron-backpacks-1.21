@@ -54,9 +54,21 @@ public class ClientEventHandler {
 
     /** Item property {@code ironbackpacks:variant}: which backpack model (the loaders register it at client setup; clamped to 0..1). */
     public static final ResourceLocation VARIANT_PROPERTY = RegistrarIronBackpacks.id("variant");
+    /** VARIANT_MODELS by type and specialty: asked every frame per rendered backpack, so no key string is built. */
+    private static final Map<ResourceLocation, float[]> VARIANT_VALUES = new java.util.HashMap<>();
+
+    static {
+        VARIANT_MODELS.forEach((key, index) -> {
+            String[] parts = key.split("/");
+            float[] bySpec = VARIANT_VALUES.computeIfAbsent(ResourceLocation.parse(parts[0]), k -> new float[gr8pefish.ironbackpacks.api.backpack.variant.BackpackSpecialty.values().length]);
+            bySpec[gr8pefish.ironbackpacks.api.backpack.variant.BackpackSpecialty.valueOf(parts[1].toUpperCase(java.util.Locale.ROOT)).ordinal()] = index / 10f;
+        });
+    }
+
     public static final ClampedItemPropertyFunction VARIANT = (stack, level, entity, seed) -> {
         BackpackInfo.Data data = stack.get(RegistrarIronBackpacks.PACK_INFO.get());
-        return data == null ? 0 : VARIANT_MODELS.getOrDefault(data.type() + "/" + data.spec().getName(), 0) / 10f;
+        float[] bySpec = data == null ? null : VARIANT_VALUES.get(data.type());
+        return bySpec == null ? 0 : bySpec[data.spec().ordinal()];
     };
     /** Item property {@code ironbackpacks:upgrade}: which upgrade model. */
     public static final ResourceLocation UPGRADE_PROPERTY = RegistrarIronBackpacks.id("upgrade");
