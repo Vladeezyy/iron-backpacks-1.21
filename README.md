@@ -10,6 +10,12 @@ specification; every difference is listed in [PORTLOG.md](PORTLOG.md).
 **Download:** [Modrinth](https://modrinth.com/mod/iron-backpacks) ·
 [GitHub releases](https://github.com/Vladeezyy/iron-backpacks-1.21/releases)
 
+| Version | Loader | Requires | Notes |
+|---|---|---|---|
+| 1.0.2+1.21.1 | NeoForge / Fabric | NeoForge 21.1.197+ / Fabric Loader 0.16.14+ and Fabric API | faster backpack rendering, lighter models |
+| 1.0.1+1.21.1 | NeoForge / Fabric | the same | the Fabric version |
+| 1.0.0+1.21.1 | NeoForge | NeoForge 21.1.197+ | first release |
+
 ## Content
 | | |
 |---|---|

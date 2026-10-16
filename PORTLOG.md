@@ -96,3 +96,6 @@ and opening, networking, the equipped-backpack data, the config, the mock connec
   inventory 69 % -> 76 %, with the damage bar 52 % -> 62 %, 400 backpacks on the ground 17 % -> 27 % (140 -> 190 FPS).
   The rest of the gap is vanilla's per-pixel item/generated geometry of a flat item; the server tick is unchanged.
 - 17 GameTests pass on NeoForge and Fabric; the DevScene screenshots match the 2026-10-09 ones (lineup pixel-identical).
+- Released as 1.0.2 (2026-10-17): GitHub release v1.0.2 (Latest, NeoForge and Fabric jars; 17 GameTests on both
+  loaders and `:fabric:prodGametest` with the release jar) and Modrinth versions 1.0.2+1.21.1-neoforge / -fabric (JEI
+  optional, Fabric API required on Fabric).
