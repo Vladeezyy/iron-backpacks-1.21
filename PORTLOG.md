@@ -78,3 +78,21 @@ and opening, networking, the equipped-backpack data, the config, the mock connec
 - JEI 19.56 on Fabric (19.57 is built with a Loom that needs Java 25 for Gradle).
 - Tests: 17 GameTests on both loaders, plus `:fabric:prodGametest`, which runs them with the release jar on a real
   Fabric server (with the fabric-gametest module, which the Fabric API bundle doesn't include).
+
+## 2026-10-17 — performance pass (branch `perf`)
+- Tool: `tools/perf.sh [-Pjfr]` runs `client/PerfScene` on NeoForge (world `neoforge/run/saves/ib_scene`, a sky platform):
+  inventory open with 36 full shulker boxes / 36 full diamond backpacks (without and with the damage bar), then 400 full
+  shulker boxes / 400 full backpacks lying on the ground; average FPS and server tick. The laptop is noisy (FPS swings
+  ~20 % between runs), so each case is compared with the shulker boxes of the same run.
+- Found (flight recording): the server does nothing per tick (no change needed); the client rebuilt the whole backpack
+  (data + a copy of every stack inside) every frame: for the item name (vanilla asks a dropped item's name twice per
+  frame for its name tag), for the durability bar (isBarVisible on every backpack, width and colour on those with the
+  upgrade) and the model property built a string key per frame.
+- Fixed: name, bar and model choice read only the backpack's header (`BackpackInfo.headerOf`: variant and upgrades),
+  the bar counts the stored contents directly; the border and latch textures (layers 1 and 2, always the same tint) are
+  merged into one `trim` texture by gen_resources.py, so the item/generated model has two layers instead of three
+  (pixel-identical with and without tint, a third fewer vertices per backpack drawn).
+- Results, FPS as a share of the shulker boxes' in the same run (average of two runs): 36 backpacks in the open
+  inventory 69 % -> 76 %, with the damage bar 52 % -> 62 %, 400 backpacks on the ground 17 % -> 27 % (140 -> 190 FPS).
+  The rest of the gap is vanilla's per-pixel item/generated geometry of a flat item; the server tick is unchanged.
+- 17 GameTests pass on NeoForge and Fabric; the DevScene screenshots match the 2026-10-09 ones (lineup pixel-identical).
