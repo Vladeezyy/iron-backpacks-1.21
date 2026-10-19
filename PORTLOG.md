@@ -112,3 +112,11 @@ Open issues of gr8pefish/IronBackpacks (42) read; those of 1.12.2 that the port 
 - Already fine in the port: #223 / #245 / #271 (the colour recipe called client code on a server), #244 / #264
   (nesting, the later 1.12 commit 0364d2d), #261 (the size config, never read in 1.12, left out).
 - 3 new GameTests (20 in all) on NeoForge and Fabric.
+
+## 2026-10-19 — Curios / Accessories on 26.3
+- `-PcompatMods=curios` now runs Curios 17.0.0-beta.3+26.3 (Modrinth; NeoForge only). `./gradlew :neoforge:runGameTestServer
+  -PcompatMods=curios`: all 21 GameTests pass; `:neoforge:runScene -PcompatMods=curios`: all 17 screenshots taken, no
+  errors in the log. The Curios button sits on the player's inventory next to the backpacks, the backpack GUIs, tooltips,
+  JEI and the hotbar look the same as without Curios.
+- Accessories has no release for Minecraft 26.x (Modrinth, 2026-10-19), so `-PcompatMods=accessories` stops the build
+  with that message instead of pulling the 1.21.1 jars.
