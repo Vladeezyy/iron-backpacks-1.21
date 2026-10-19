@@ -33,7 +33,9 @@ displayName="${mod_name}" #mandatory
 displayURL="https://github.com/gr8pefish/IronBackpacks"
 
 # A file name (in the root of the mod JAR) containing a logo for display
-logoFile="ironbackpacks_logo.png"
+# NeoForge 26.2+: logoFile is deprecated (a warning screen before the main menu)
+bannerFile="ironbackpacks_logo.png"
+iconFile="ironbackpacks_icon.png"
 
 # A text field displayed in the mod UI
 credits="Original credits: cpw, sapient, #minecraftforge (especially diesieben07), TehNut, tterrag; backpack GUI code by copygirl"
