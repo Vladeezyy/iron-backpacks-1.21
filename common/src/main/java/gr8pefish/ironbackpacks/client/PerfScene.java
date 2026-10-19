@@ -60,6 +60,8 @@ public final class PerfScene {
             // nothing may cap the frame rate, or both sides of a comparison read the same number
             mc.options.framerateLimit().set(260);
             mc.options.enableVsync().set(false);
+            // 1.21.2+: the frame rate drops to 30 FPS after 30 s without input (the agent never touches the game)
+            mc.options.inactivityFpsLimit().set(net.minecraft.client.InactivityFpsLimit.MINIMIZED);
             mc.options.cloudStatus().set(CloudStatus.OFF);
             server(mc, PerfScene::platform);
         });
