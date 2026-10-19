@@ -100,7 +100,7 @@ and opening, networking, the equipped-backpack data, the config, the mock connec
   loaders and `:fabric:prodGametest` with the release jar) and Modrinth versions 1.0.2+1.21.1-neoforge / -fabric (JEI
   optional, Fabric API required on Fabric).
 
-## 2026-10-19 � bugs of the original (1.0.3)
+## 2026-10-19 — bugs of the original (1.0.3)
 Open issues of gr8pefish/IronBackpacks (42) read; those of 1.12.2 that the port still had are fixed in common code:
 - #234, #268 (dupe): `ContainerBackpack.stillValid` was always true, so the GUI of a dropped / moved backpack stayed
   open and its slots could be emptied while the dropped copy kept the items. Now the opened stack (by reference) must
@@ -112,3 +112,44 @@ Open issues of gr8pefish/IronBackpacks (42) read; those of 1.12.2 that the port 
 - Already fine in the port: #223 / #245 / #271 (the colour recipe called client code on a server), #244 / #264
   (nesting, the later 1.12 commit 0364d2d), #261 (the size config, never read in 1.12, left out).
 - 3 new GameTests (20 in all) on NeoForge and Fabric.
+
+## 2026-10-19 — Minecraft 26.1.2, 26.2 and 26.3 (1.0.3, branches mc/*)
+One port commit per version on top of the previous one (main → mc/26.1.2 → mc/26.2 → mc/26.3), the same gameplay and
+data as 1.21.1. Build: Gradle 9.8.1, Java 25, Fabric Loom 1.18 without mappings, no Parchment.
+- Items: ids in the properties (`Properties.setId`), names by `getName(stack)` (the backpack name still depends on its
+  type), `appendHoverText` with a consumer; `use` returns `InteractionResult` (`ResultHolder` replaces 1.21.1's
+  InteractionResultHolder in the API helpers).
+- Item models: the overrides of models/item/*.json are client item definitions `assets/ironbackpacks/items/*.json`
+  with two select properties (`ironbackpacks:variant` "type/specialty", `ironbackpacks:upgrade`) and a tint source
+  (`ironbackpacks:backpack_color`, the trim layer); NeoForge registers them with its events, Fabric through the
+  mappers its access wideners open. `tools/convert_26.py` writes them and the 26.x recipes (string ingredients).
+- Recipes: `ShapedRecipe` subclasses with `Recipe.CommonInfo` / `CraftingBookInfo`, the serializer is a record
+  (`getSerializer` cast, ShapedRecipe fixes its type); the result is an `ItemStackTemplate` built from the component
+  patch, because 26.x reads recipes before item components are bound (an ItemStack there crashes:
+  "Components not bound yet"). The backpack slot shows the fitting backpacks through `display()`.
+- JEI 29-31: the client has no recipe manager; the tier recipes come with the loaders' recipe sync (NeoForge
+  `OnDatapackSyncEvent.sendRecipes` + `RecipesReceivedEvent`, Fabric `RecipeSynchronization` +
+  `ClientRecipeSynchronizedEvent`), slots are built from the recipe's `SlotDisplay`s.
+- Menu: `ContainerInput` (ClickType), `Inventory.getSelectedSlot()`; the opening sound by the open key is a
+  `ClientboundSoundPacket` to that player (no `playNotifySound`); 26.x `SimpleContainer` has no listeners, so
+  `BackpackInventory` calls back itself (the same on main).
+- GUI: the extract API (`extractLabels`, `extractBackground`, `GuiGraphicsExtractor.blit(RenderPipelines.GUI_TEXTURED, ...)`),
+  the size given to the screen constructor, ARGB text colours. Keys: `KeyMapping.Category` with the id
+  `ironbackpacks:main` (lang `key.category.ironbackpacks.main`); 26.3 uses `InputConstants.Type.KEYBOARD` and scancodes.
+- Anvil on NeoForge: `AnvilRepairEvent`'s break chance is gone; `AnvilCraftEvent.Pre` is cancelled and the vanilla take
+  done without the damage roll (as the Fabric mixin does).
+- GameTests: a registry of test functions plus test instances (NeoForge `RegisterGameTestsEvent`), Fabric
+  `@GameTest` methods (`FabricGameTests`, one line per common test). The mock player is a `ServerPlayer` subclass:
+  NeoForge's config sync throws for a plain one that never had a configuration phase.
+- 26.2: `Minecraft.gui` holds the screen and overlay, `GameRenderer.mainRenderTarget()`, colour collections
+  (`Items.DYE.red()`), no `BlockPos.getCenter()`; neoforge.mods.toml `bannerFile`/`iconFile` instead of `logoFile`.
+- 26.3: `Inventory.placeItemBackInInventory(stack, Prediction)`, `TestData` with a dimension.
+- Tests on every version: 20 GameTests on NeoForge and Fabric, `:fabric:prodGametest` with the release jar, the
+  DevScene (17 screenshots, the same as 1.21.1; Russian checked on 26.1.2) on both loaders.
+- PerfScene on 26.3 (NeoForge; 26.x also caps the frame rate to 30 after 30 s without input, now switched off in the
+  scene): 36 full backpacks in the open inventory 1514 FPS against 1645 for shulker boxes (92 %, 1.21.1: 76 %), with the
+  damage bar 68 %; 400 on the ground 148 against 1006 FPS (15 %). A flight recording of the last case: the mod's code
+  is 2 % of the render thread, the rest is vanilla emitting the quads of the flat item/generated model (a shulker box
+  item is a few cuboids). Server tick the same as with shulker boxes (1.9 / 2.1 ms).
+- Known: the open key's default (I) is also the key of the 26.x debug combination F3+I (copy recreate command); they
+  don't interfere, F3 has to be held for the debug one.

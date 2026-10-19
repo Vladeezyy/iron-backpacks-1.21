@@ -1,7 +1,7 @@
-# Iron Backpacks for Minecraft 1.21.1 (NeoForge and Fabric)
+# Iron Backpacks for Minecraft 1.21.1 and 26.x (NeoForge and Fabric)
 
 An unofficial port of [Iron Backpacks](https://github.com/gr8pefish/IronBackpacks) by gr8pefish and contributors
-from Minecraft 1.12.2 (version 3.0.8) to **Minecraft 1.21.1** on **NeoForge 21.1** and **Fabric**.
+from Minecraft 1.12.2 (version 3.0.8) to **Minecraft 1.21.1, 26.1.2, 26.2 and 26.3** on **NeoForge** and **Fabric**.
 
 The port keeps the 1.12.2 behaviour, numbers, textures, sounds and translations (plus Russian, Ukrainian and Portuguese (Brazil) ones, and
 the German and Spanish strings 1.12.2 lacked). The 1.12.2 source is the
@@ -12,7 +12,10 @@ specification; every difference is listed in [PORTLOG.md](PORTLOG.md).
 
 | Version | Loader | Requires | Notes |
 |---|---|---|---|
-| 1.0.3+1.21.1 | NeoForge / Fabric | the same | fixes of the original's dupes and lost contents (see below) |
+| 1.0.3+26.3 | NeoForge / Fabric | NeoForge 26.3.0.94+ / Fabric Loader 0.19.5+ and Fabric API 0.164+, Java 25 | first 26.x versions |
+| 1.0.3+26.2 | NeoForge / Fabric | NeoForge 26.2.0.93+ / Fabric Loader 0.19.5+ and Fabric API 0.161+, Java 25 | |
+| 1.0.3+26.1.2 | NeoForge / Fabric | NeoForge 26.1.2.122+ / Fabric Loader 0.19.5+ and Fabric API 0.155.3+, Java 25 | |
+| 1.0.3+1.21.1 | NeoForge / Fabric | the same as 1.0.2 | fixes of the original's dupes and lost contents (see below) |
 | 1.0.2+1.21.1 | NeoForge / Fabric | NeoForge 21.1.197+ / Fabric Loader 0.16.14+ and Fabric API | faster backpack rendering, lighter models |
 | 1.0.1+1.21.1 | NeoForge / Fabric | the same | the Fabric version |
 | 1.0.0+1.21.1 | NeoForge | NeoForge 21.1.197+ | first release |
@@ -41,9 +44,21 @@ Report bugs of this port [here](https://github.com/Vladeezyy/iron-backpacks-1.21
 | [#244](https://github.com/gr8pefish/IronBackpacks/issues/244), [#264](https://github.com/gr8pefish/IronBackpacks/issues/264) backpacks shift-clicked into each other | backpacks can't go into backpacks in any way (shift, number keys, offhand swap) |
 | gold and diamond backpacks couldn't be dyed (the recipes asked for a basic backpack) | every tier can be dyed |
 
+## Branches
+| Branch | Minecraft | Build JDK |
+|---|---|---|
+| `main` | 1.21.1 (NeoForge 21.1, Fabric) | 21 |
+| `mc/26.1.2` | 26.1.2 | 25 (also for Gradle: Fabric Loom 1.18) |
+| `mc/26.2` | 26.2 | 25 |
+| `mc/26.3` | 26.3 | 25 |
+
+Each `mc/*` branch is the port commit on top of the previous one (`main` → `mc/26.1.2` → `mc/26.2` → `mc/26.3`); fixes
+for every version go into `main` first. What changed for 26.x is in [PORTLOG.md](PORTLOG.md).
+
 ## Building
-Requires JDK 21. The game code is in `common`; `neoforge` and `fabric` are thin loader layers over it (after the
-MultiLoader template), behind `gr8pefish.ironbackpacks.platform.IPlatform`.
+Requires JDK 21 (`main`) or JDK 25 (`mc/*`, `JAVA_HOME` pointing to it). The game code is in `common`; `neoforge` and
+`fabric` are thin loader layers over it (after the MultiLoader template), behind
+`gr8pefish.ironbackpacks.platform.IPlatform`.
 ```bash
 ./gradlew build                          # jars in neoforge/build/libs and fabric/build/libs
 ./gradlew :neoforge:runClient            # dev clients (with JEI)
@@ -51,13 +66,14 @@ MultiLoader template), behind `gr8pefish.ironbackpacks.platform.IPlatform`.
 ./gradlew :neoforge:runGameTestServer    # headless in-game tests
 ./gradlew :fabric:runGametest
 ./gradlew :fabric:prodGametest           # the tests with the release Fabric jar on a real Fabric server
-./gradlew :neoforge:runScene             # scripted scene: screenshots to <loader>/run/screenshots/ (needs run/saves/ib_scene)
+./gradlew :neoforge:runScene             # scripted scene: screenshots to <loader>/run/screenshots/ (1.21.1: needs run/saves/ib_scene; 26.x: makes a new world)
 ./gradlew :fabric:runScene
 ```
 Resources are generated from the original 1.12.2 assets:
 ```bash
 rm -rf common/src/main/resources/{assets,data} && python3 -I tools/gen_resources.py <IronBackpacks dev-1.12>/src/main/resources/assets/ironbackpacks common/src/main/resources
 ```
+On the `mc/*` branches they are then turned into the 26.x format: `python3 -I tools/convert_26.py common/src/main/resources`.
 
 ## License and credits
 GPL-3.0, the same license as the original — see [LICENSE](LICENSE).
