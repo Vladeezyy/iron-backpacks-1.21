@@ -49,10 +49,10 @@ public final class DevScene {
     static {
         at(40, mc -> server(mc, DevScene::build));
         at(80, mc -> shot(mc, "hotbar"));
-        at(85, mc -> mc.setScreen(new CreativeModeInventoryScreen(mc.player, mc.player.connection.enabledFeatures(), true)));
+        at(85, mc -> mc.gui.setScreen(new CreativeModeInventoryScreen(mc.player, mc.player.connection.enabledFeatures(), true)));
         at(90, mc -> selectTab(mc));
         at(100, mc -> shot(mc, "creative_tab"));
-        at(105, mc -> mc.setScreen(null));
+        at(105, mc -> mc.gui.setScreen(null));
         String[] names = {"basic", "iron_storage", "iron_upgrade", "gold_storage", "gold_upgrade", "diamond_storage", "diamond_upgrade"};
         for (int i = 0; i < names.length; i++) {
             int slot = i, t = 110 + i * 30;
@@ -62,27 +62,27 @@ public final class DevScene {
             at(t + 20, mc -> shot(mc, "gui_" + name));
             at(t + 25, mc -> mc.player.closeContainer());
         }
-        at(320, mc -> mc.setScreen(new Showcase(packWithUpgrades())));
+        at(320, mc -> mc.gui.setScreen(new Showcase(packWithUpgrades())));
         at(326, mc -> shot(mc, "tooltip"));
         at(328, mc -> ClientEventHandler.sceneShift = true);
         at(334, mc -> shot(mc, "tooltip_shift"));
-        at(336, mc -> mc.setScreen(new Showcase(upgrade("everlasting"))));
+        at(336, mc -> mc.gui.setScreen(new Showcase(upgrade("everlasting"))));
         at(342, mc -> shot(mc, "tooltip_upgrade"));
         at(344, mc -> ClientEventHandler.sceneShift = false);
-        at(345, mc -> mc.setScreen(new Lineup()));
+        at(345, mc -> mc.gui.setScreen(new Lineup()));
         at(348, mc -> shot(mc, "lineup"));
-        at(349, mc -> mc.setScreen(null));
+        at(349, mc -> mc.gui.setScreen(null));
         at(350, mc -> server(mc, DevScene::openAnvil));
         at(370, mc -> shot(mc, "anvil"));
         at(375, mc -> mc.player.closeContainer());
         at(380, mc -> openJei());
         at(400, mc -> shot(mc, "jei_tier"));
-        at(405, mc -> mc.setScreen(null));
+        at(405, mc -> mc.gui.setScreen(null));
         // other mods' inventory additions (Curios / Accessories slots) next to the backpacks, and key conflicts
         at(410, mc -> server(mc, p -> p.setGameMode(GameType.SURVIVAL)));
-        at(420, mc -> mc.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player)));
+        at(420, mc -> mc.gui.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player)));
         at(435, mc -> shot(mc, "player_inventory"));
-        at(440, mc -> mc.setScreen(null));
+        at(440, mc -> mc.gui.setScreen(null));
         at(445, DevScene::logKeyConflicts);
         at(450, mc -> select(mc, 1));
         at(455, mc -> server(mc, p -> ContainerBackpack.open(p, ContainerBackpack.Mode.HELD, InteractionHand.MAIN_HAND)));
@@ -105,8 +105,8 @@ public final class DevScene {
         // The window is usually unfocused while an agent runs this: never pause, or the integrated server stops.
         mc.options.pauseOnLostFocus = false;
         mc.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE);
-        if (mc.screen instanceof net.minecraft.client.gui.screens.PauseScreen) {
-            mc.setScreen(null);
+        if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.PauseScreen) {
+            mc.gui.setScreen(null);
         }
         tick++;
         for (Step step : STEPS) {
@@ -129,10 +129,10 @@ public final class DevScene {
         if (mc.options.onboardAccessibility) {
             mc.options.onboardAccessibility = false;
             mc.options.save();
-            mc.setScreen(new net.minecraft.client.gui.screens.TitleScreen());
+            mc.gui.setScreen(new net.minecraft.client.gui.screens.TitleScreen());
             return true;
         }
-        if (mc.getOverlay() != null || !(mc.screen instanceof net.minecraft.client.gui.screens.TitleScreen))
+        if (mc.gui.overlay() != null || !(mc.gui.screen() instanceof net.minecraft.client.gui.screens.TitleScreen))
             return true;
         worldCreated = true;
         mc.options.pauseOnLostFocus = false;
@@ -141,7 +141,7 @@ public final class DevScene {
                 new net.minecraft.world.level.LevelSettings.DifficultySettings(net.minecraft.world.Difficulty.PEACEFUL, false, false), true,
                 net.minecraft.world.level.WorldDataConfiguration.DEFAULT);
         mc.createWorldOpenFlows().createFreshLevel(name, settings, new net.minecraft.world.level.levelgen.WorldOptions(20261019L, false, false),
-                net.minecraft.world.level.levelgen.presets.WorldPresets::createFlatWorldDimensions, new net.minecraft.client.gui.screens.TitleScreen());
+                net.minecraft.world.level.levelgen.presets.WorldPresets::createTestWorldDimensions, new net.minecraft.client.gui.screens.TitleScreen());
         return true;
     }
 
@@ -219,7 +219,7 @@ public final class DevScene {
     }
 
     private static void selectTab(Minecraft mc) {
-        if (!(mc.screen instanceof CreativeModeInventoryScreen screen)) return;
+        if (!(mc.gui.screen() instanceof CreativeModeInventoryScreen screen)) return;
         try {
             var method = CreativeModeInventoryScreen.class.getDeclaredMethod("selectTab", net.minecraft.world.item.CreativeModeTab.class);
             method.setAccessible(true);
@@ -347,7 +347,7 @@ public final class DevScene {
     }
 
     private static void shot(Minecraft mc, String name) {
-        Screenshot.grab(mc.gameDirectory, "scene_" + name + ".png", mc.getMainRenderTarget(), 1,
+        Screenshot.grab(mc.gameDirectory, "scene_" + name + ".png", mc.gameRenderer.mainRenderTarget(), 1,
                 msg -> IronBackpacks.LOGGER.info("[scene] {}", msg.getString()));
     }
 

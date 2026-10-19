@@ -101,7 +101,7 @@ public final class IBGameTests {
         Services.PLATFORM.configureMockConnection(connection);
         helper.getLevel().getServer().getPlayerList().placeNewPlayer(connection, player, cookie);
         player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
-        var pos = helper.absolutePos(new BlockPos(2, 1, 2)).getBottomCenter();
+        var pos = net.minecraft.world.phys.Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(2, 1, 2)));
         player.snapTo(pos.x, pos.y, pos.z, 0, 0);
         return player;
     }
@@ -178,7 +178,7 @@ public final class IBGameTests {
     }
 
     private static void basicRecipe(GameTestHelper helper) {
-        ItemStack wool = new ItemStack(Items.BLUE_WOOL);
+        ItemStack wool = new ItemStack(Items.WOOL.blue());
         ItemStack leather = new ItemStack(Items.LEATHER);
         ItemStack result = craft(helper, 3, 3, wool, leather, wool, leather, new ItemStack(Items.CHEST), leather, wool, leather, wool);
         BackpackInfo info = BackpackInfo.fromStack(result);
@@ -193,17 +193,17 @@ public final class IBGameTests {
         BackpackInfo info = BackpackInfo.fromStack(basic);
         info.getInventory().setStackInSlot(3, new ItemStack(Items.STONE, 9));
         IronBackpacksAPI.applyPackInfo(basic, info);
-        ItemStack red = craft(helper, 2, 1, basic, new ItemStack(Items.RED_DYE));
+        ItemStack red = craft(helper, 2, 1, basic, new ItemStack(Items.DYE.red()));
         check(helper, BackpackInfo.getColor(red) == (DyeColor.RED.getTextureDiffuseColor() & 0xFFFFFF), "red " + BackpackInfo.getColor(red));
         check(helper, BackpackInfo.fromStack(red).getInventory().getStackInSlot(3).getCount() == 9, "items kept");
         ItemStack washed = craft(helper, 2, 1, red, new ItemStack(Items.WATER_BUCKET));
         check(helper, !washed.isEmpty() && BackpackInfo.getColor(washed) == -1, "washed");
-        check(helper, !craft(helper, 2, 1, pack("iron", BackpackSpecialty.UPGRADE), new ItemStack(Items.BLUE_DYE)).isEmpty(), "iron can be dyed");
+        check(helper, !craft(helper, 2, 1, pack("iron", BackpackSpecialty.UPGRADE), new ItemStack(Items.DYE.blue())).isEmpty(), "iron can be dyed");
         // 1.12.2 couldn't dye gold / diamond backpacks (PACK_BASIC typo); the port fixes it
-        ItemStack gold = craft(helper, 2, 1, pack("gold", BackpackSpecialty.STORAGE), new ItemStack(Items.BLUE_DYE));
+        ItemStack gold = craft(helper, 2, 1, pack("gold", BackpackSpecialty.STORAGE), new ItemStack(Items.DYE.blue()));
         check(helper, BackpackInfo.getColor(gold) == (DyeColor.BLUE.getTextureDiffuseColor() & 0xFFFFFF)
                 && BackpackInfo.fromStack(gold).getVariant().getBackpackType().getIdentifier().getPath().equals("gold"), "gold dyed");
-        ItemStack diamond = craft(helper, 2, 1, pack("diamond", BackpackSpecialty.UPGRADE), new ItemStack(Items.GREEN_DYE));
+        ItemStack diamond = craft(helper, 2, 1, pack("diamond", BackpackSpecialty.UPGRADE), new ItemStack(Items.DYE.green()));
         check(helper, BackpackInfo.getColor(diamond) == (DyeColor.GREEN.getTextureDiffuseColor() & 0xFFFFFF)
                 && BackpackInfo.fromStack(diamond).getVariant().getBackpackSpecialty() == BackpackSpecialty.UPGRADE, "diamond dyed");
         helper.succeed();
@@ -322,7 +322,7 @@ public final class IBGameTests {
 
     /** An item entity one tick before it expires, ticked once. */
     private static ItemEntity expire(GameTestHelper helper, ItemStack stack) {
-        var pos = helper.absolutePos(new BlockPos(1, 2, 1)).getCenter();
+        var pos = net.minecraft.world.phys.Vec3.atCenterOf(helper.absolutePos(new BlockPos(1, 2, 1)));
         ItemEntity entity = new ItemEntity(helper.getLevel(), pos.x, pos.y, pos.z, stack);
         helper.getLevel().addFreshEntity(entity);
         entity.makeFakeItem();                                // age 5999: expires on the next tick

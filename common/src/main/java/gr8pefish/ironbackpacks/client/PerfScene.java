@@ -68,16 +68,16 @@ public final class PerfScene {
         for (int i = 0; i < cases.length; i++) {
             int kind = i;
             at(t, mc -> {
-                mc.setScreen(null);
+                mc.gui.setScreen(null);
                 server(mc, p -> fillInventory(p, kind));
             });
-            at(t + 10, mc -> mc.setScreen(new InventoryScreen(mc.player)));
+            at(t + 10, mc -> mc.gui.setScreen(new InventoryScreen(mc.player)));
             at(t + 60, mc -> start());
             at(t + 260, mc -> stop(cases[kind] + ", inventory open"));
             t += 270;
         }
         at(t, mc -> {
-            mc.setScreen(null);
+            mc.gui.setScreen(null);
             server(mc, p -> fillInventory(p, 0));
         });
         String[] drops = {"400 full shulker boxes on the ground", "400 full diamond backpacks on the ground"};
@@ -103,7 +103,7 @@ public final class PerfScene {
         if (tick == 0 && STEPS.isEmpty()) initSteps();
         // the window is usually unfocused while this runs: never pause, or the integrated server stops
         mc.options.pauseOnLostFocus = false;
-        if (mc.screen instanceof net.minecraft.client.gui.screens.PauseScreen) mc.setScreen(null);
+        if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.PauseScreen) mc.gui.setScreen(null);
         if (measuring && tick % 20 == 0) {
             fpsSum += mc.getFps();
             fpsSamples++;
