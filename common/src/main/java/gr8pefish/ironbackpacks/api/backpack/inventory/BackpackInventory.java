@@ -11,8 +11,23 @@ import net.minecraft.world.item.ItemStack;
  */
 public class BackpackInventory extends SimpleContainer {
 
+    /** Called on every change (26.x SimpleContainer has no listeners). */
+    @javax.annotation.Nullable
+    private Runnable onChange;
+
     public BackpackInventory(int size) {
         super(size);
+    }
+
+    public void setOnChange(@javax.annotation.Nullable Runnable onChange) {
+        this.onChange = onChange;
+    }
+
+    @Override
+    public void setChanged() {
+        super.setChanged();
+        if (onChange != null)
+            onChange.run();
     }
 
     public int getSlots() {

@@ -71,7 +71,7 @@ public class ContainerBackpack extends AbstractContainerMenu {
         // Every change goes into the backpack at once (1.12 only saved on close): a copy of the backpack made while
         // the GUI is open (dropped, moved by a sorting mod) carries the current contents, never an older state
         // (gr8pefish/IronBackpacks#255, #221).
-        itemHandler.addListener(container -> save());
+        itemHandler.setOnChange(this::save);
     }
 
     private void save() {
