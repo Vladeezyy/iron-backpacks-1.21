@@ -14,7 +14,7 @@ import gr8pefish.ironbackpacks.core.EventHandler;
 import gr8pefish.ironbackpacks.core.RegistrarIronBackpacks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.core.BlockPos;
@@ -95,12 +95,16 @@ public final class DevScene {
         STEPS.add(new Step(t, action));
     }
 
+    private static boolean worldCreated;
+
     /** End of every client tick (called by ClientEventHandler). */
     static void onTick(Minecraft mc) {
         if (!ENABLED) return;
+        if (!worldCreated && createWorld(mc)) return;
         if (mc.player == null || mc.getSingleplayerServer() == null) return;
         // The window is usually unfocused while an agent runs this: never pause, or the integrated server stops.
         mc.options.pauseOnLostFocus = false;
+        mc.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE);
         if (mc.screen instanceof net.minecraft.client.gui.screens.PauseScreen) {
             mc.setScreen(null);
         }
@@ -111,6 +115,34 @@ public final class DevScene {
                 step.action().accept(mc);
             }
         }
+    }
+
+    /**
+     * 26.x: a new flat world from the title screen (an ib_scene world of 1.21.1 opens with the upgrade screen, and
+     * --quickPlaySingleplayer does not create one). Returns true while the scene waits for it.
+     */
+    static boolean createWorld(Minecraft mc) {
+        if (mc.player != null) {
+            worldCreated = true;
+            return false;
+        }
+        if (mc.options.onboardAccessibility) {
+            mc.options.onboardAccessibility = false;
+            mc.options.save();
+            mc.setScreen(new net.minecraft.client.gui.screens.TitleScreen());
+            return true;
+        }
+        if (mc.getOverlay() != null || !(mc.screen instanceof net.minecraft.client.gui.screens.TitleScreen))
+            return true;
+        worldCreated = true;
+        mc.options.pauseOnLostFocus = false;
+        String name = "ib_scene_" + System.currentTimeMillis();
+        var settings = new net.minecraft.world.level.LevelSettings(name, GameType.CREATIVE,
+                new net.minecraft.world.level.LevelSettings.DifficultySettings(net.minecraft.world.Difficulty.PEACEFUL, false, false), true,
+                net.minecraft.world.level.WorldDataConfiguration.DEFAULT);
+        mc.createWorldOpenFlows().createFreshLevel(name, settings, new net.minecraft.world.level.levelgen.WorldOptions(20261019L, false, false),
+                net.minecraft.world.level.levelgen.presets.WorldPresets::createFlatWorldDimensions, new net.minecraft.client.gui.screens.TitleScreen());
+        return true;
     }
 
     private static void server(Minecraft mc, Consumer<ServerPlayer> action) {
@@ -146,13 +178,14 @@ public final class DevScene {
 
     /** Noon on the flat world; the hotbar holds every backpack variant, the main inventory some loot. */
     private static void build(ServerPlayer player) {
-        ServerLevel level = player.serverLevel();
-        level.setDayTime(6000);
-        level.setWeatherParameters(6000, 0, false, false);
+        ServerLevel level = player.level();
+        // 26.x: time and weather by command (the time API moved to clocks)
+        command(level, "time set noon");
+        command(level, "weather clear");
         player.setGameMode(GameType.CREATIVE);
-        BlockPos spawn = level.getSharedSpawnPos();
+        BlockPos spawn = level.getRespawnData().pos();
         BlockPos base = new BlockPos(spawn.getX(), level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, spawn.getX(), spawn.getZ()), spawn.getZ());
-        player.teleportTo(level, base.getX() + 0.5, base.getY(), base.getZ() + 0.5, Set.of(), 180f, 20f);
+        player.teleportTo(level, base.getX() + 0.5, base.getY(), base.getZ() + 0.5, Set.of(), 180f, 20f, true);
         anvilPos = base.offset(0, 0, -2);
         level.setBlockAndUpdate(anvilPos, Blocks.ANVIL.defaultBlockState());
 
@@ -172,12 +205,17 @@ public final class DevScene {
         inv.setItem(10, upgrade("extra_upgrade"));
         inv.setItem(11, upgrade("everlasting"));
         inv.setItem(12, new ItemStack(Items.SHEARS));
-        inv.selected = 0;
+        inv.setSelectedSlot(0);
+    }
+
+    static void command(ServerLevel level, String command) {
+        MinecraftServer server = level.getServer();
+        server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(), command);
     }
 
     private static void select(Minecraft mc, int slot) {
-        mc.player.getInventory().selected = slot;
-        server(mc, p -> p.getInventory().selected = slot);
+        mc.player.getInventory().setSelectedSlot(slot);
+        server(mc, p -> p.getInventory().setSelectedSlot(slot));
     }
 
     private static void selectTab(Minecraft mc) {
@@ -200,7 +238,7 @@ public final class DevScene {
 
     /** An anvil with an iron backpack and a damage bar upgrade: the result has the upgrade installed. */
     private static void openAnvil(ServerPlayer player) {
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = player.level();
         player.openMenu(new SimpleMenuProvider((id, inv, p) -> new AnvilMenu(id, inv, ContainerLevelAccess.create(level, anvilPos)),
                 Component.translatable("container.repair")));
         if (player.containerMenu instanceof AnvilMenu anvil) {
@@ -238,11 +276,11 @@ public final class DevScene {
         }
 
         @Override
-        public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-            super.render(g, mouseX, mouseY, partialTick);
-            g.renderItem(stack, width / 2 - 100, height / 2 - 40);
-            g.renderItemDecorations(font, stack, width / 2 - 100, height / 2 - 40);
-            g.renderTooltip(font, stack, width / 2 - 80, height / 2 - 40);
+        public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
+            super.extractRenderState(g, mouseX, mouseY, partialTick);
+            g.item(stack, width / 2 - 100, height / 2 - 40);
+            g.itemDecorations(font, stack, width / 2 - 100, height / 2 - 40);
+            g.setTooltipForNextFrame(font, stack, width / 2 - 80, height / 2 - 40);
         }
 
         @Override
@@ -262,7 +300,7 @@ public final class DevScene {
         }
 
         @Override
-        public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
             g.fill(0, 0, width, height, 0xFF20242C);
             ItemStack[][] rows = {
                     {pack("basic", BackpackSpecialty.NONE), pack("iron", BackpackSpecialty.STORAGE), pack("iron", BackpackSpecialty.UPGRADE),
@@ -281,22 +319,22 @@ public final class DevScene {
                 for (int i = 0; i < rows[r].length; i++) {
                     ItemStack stack = rows[r][i];
                     int x = left + i * rowCell + (rowCell - cell) / 2, y = top + r * (cell + 14);
-                    g.pose().pushPose();
-                    g.pose().translate(x + (cell - 16 * scale) / 2f, y, 0);
-                    g.pose().scale(scale, scale, 1);
-                    g.renderItem(stack, 0, 0);
-                    g.pose().popPose();
+                    g.pose().pushMatrix();
+                    g.pose().translate(x + (cell - 16 * scale) / 2f, y);
+                    g.pose().scale(scale, scale);
+                    g.item(stack, 0, 0);
+                    g.pose().popMatrix();
                     if (r == 0 || r == 2) {
                         Component name = stack.getHoverName();
                         var variant = BackpackInfo.fromStack(stack).getVariant();
                         Component spec = r == 0 && variant.getBackpackType().hasSpecialties()
                                 ? Component.translatable("tooltip.ironbackpacks.backpack.emphasis." + variant.getBackpackSpecialty().getName()) : null;
-                        g.pose().pushPose();
-                        g.pose().translate(x + cell / 2f, y + 16 * scale + 2, 0);
-                        g.pose().scale(0.5f, 0.5f, 1);
-                        g.drawCenteredString(font, name, 0, 0, 0xFFFFFF);
-                        if (spec != null) g.drawCenteredString(font, spec, 0, 10, 0xA0A0A0);
-                        g.pose().popPose();
+                        g.pose().pushMatrix();
+                        g.pose().translate(x + cell / 2f, y + 16 * scale + 2);
+                        g.pose().scale(0.5f, 0.5f);
+                        g.centeredText(font, name, 0, 0, 0xFFFFFFFF);
+                        if (spec != null) g.centeredText(font, spec, 0, 10, 0xFFA0A0A0);
+                        g.pose().popMatrix();
                     }
                 }
             }
@@ -309,7 +347,7 @@ public final class DevScene {
     }
 
     private static void shot(Minecraft mc, String name) {
-        Screenshot.grab(mc.gameDirectory, "scene_" + name + ".png", mc.getMainRenderTarget(),
+        Screenshot.grab(mc.gameDirectory, "scene_" + name + ".png", mc.getMainRenderTarget(), 1,
                 msg -> IronBackpacks.LOGGER.info("[scene] {}", msg.getString()));
     }
 

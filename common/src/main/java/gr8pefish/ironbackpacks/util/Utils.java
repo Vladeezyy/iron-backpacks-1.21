@@ -13,7 +13,6 @@ import gr8pefish.ironbackpacks.api.backpack.BackpackInfo;
 import gr8pefish.ironbackpacks.api.backpack.IBackpack;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -37,21 +36,21 @@ public class Utils {
      *
      * @param player       - The player to find a backpack for
      * @param requirements - Requirements the backpack must meet, such as having a specific upgrade
-     * @return an InteractionResultHolder containing information on the discovered stack
+     * @return a ResultHolder containing information on the discovered stack
      */
     // TODO - Look for equipped backpack when implemented
     @Nonnull
-    public static InteractionResultHolder<ItemStack> getBackpack(@Nonnull Player player, @Nonnull Predicate<Pair<ItemStack, IBackpack>> requirements) {
+    public static ResultHolder<ItemStack> getBackpack(@Nonnull Player player, @Nonnull Predicate<Pair<ItemStack, IBackpack>> requirements) {
         Inventory inventory = player.getInventory();
         for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
             ItemStack foundStack = inventory.getItem(slot);
             if (!foundStack.isEmpty() && foundStack.getItem() instanceof IBackpack && requirements.test(Pair.of(foundStack, (IBackpack) foundStack.getItem()))) {
                 InteractionResult result = slot < 9 ? InteractionResult.SUCCESS : InteractionResult.PASS;
-                return new InteractionResultHolder<>(result, foundStack);
+                return new ResultHolder<>(result, foundStack);
             }
         }
 
-        return InteractionResultHolder.fail(ItemStack.EMPTY);
+        return ResultHolder.fail(ItemStack.EMPTY);
     }
 
     /**
@@ -60,19 +59,19 @@ public class Utils {
      * @see #getBackpack(Player, Predicate)
      */
     @Nonnull
-    public static InteractionResultHolder<ItemStack> getBackpack(@Nonnull Player player) {
+    public static ResultHolder<ItemStack> getBackpack(@Nonnull Player player) {
         return getBackpack(player, Predicates.alwaysTrue());
     }
 
     @Nonnull
-    public static List<InteractionResultHolder<ItemStack>> getAllBackpacks(@Nonnull Player player, @Nonnull Predicate<Pair<ItemStack, IBackpack>> requirements) {
+    public static List<ResultHolder<ItemStack>> getAllBackpacks(@Nonnull Player player, @Nonnull Predicate<Pair<ItemStack, IBackpack>> requirements) {
         Inventory inventory = player.getInventory();
-        List<InteractionResultHolder<ItemStack>> backpacks = Lists.newArrayList();
+        List<ResultHolder<ItemStack>> backpacks = Lists.newArrayList();
         for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
             ItemStack foundStack = inventory.getItem(slot);
             if (!foundStack.isEmpty() && foundStack.getItem() instanceof IBackpack && requirements.test(Pair.of(foundStack, (IBackpack) foundStack.getItem()))) {
                 InteractionResult result = slot < 9 ? InteractionResult.SUCCESS : InteractionResult.PASS;
-                backpacks.add(new InteractionResultHolder<>(result, foundStack));
+                backpacks.add(new ResultHolder<>(result, foundStack));
             }
         }
 
@@ -80,7 +79,7 @@ public class Utils {
     }
 
     @Nonnull
-    public static List<InteractionResultHolder<ItemStack>> getAllBackpacks(@Nonnull Player player) {
+    public static List<ResultHolder<ItemStack>> getAllBackpacks(@Nonnull Player player) {
         return getAllBackpacks(player, Predicates.alwaysTrue());
     }
 

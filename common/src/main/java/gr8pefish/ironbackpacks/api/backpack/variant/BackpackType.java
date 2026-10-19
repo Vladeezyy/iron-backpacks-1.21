@@ -2,7 +2,7 @@ package gr8pefish.ironbackpacks.api.backpack.variant;
 
 import com.google.common.base.Preconditions;
 import gr8pefish.ironbackpacks.api.IronBackpacksAPI;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import javax.annotation.Nonnegative;
@@ -18,7 +18,7 @@ public class BackpackType {
     // Fields
 
     @Nonnull
-    private final ResourceLocation identifier;
+    private final Identifier identifier;
     @Nonnegative
     private final int tier;
     @Nonnegative
@@ -32,13 +32,13 @@ public class BackpackType {
     /**
      * "Main" constructor for a BackpackType
      *
-     * @param identifier           - A unique identifier for the backpack. Typically something like: ResourceLocation(IronBackpacks.MODID, "basic").
+     * @param identifier           - A unique identifier for the backpack. Typically something like: Identifier(IronBackpacks.MODID, "basic").
      * @param tier                 - The tier of the backpack. Starts at 0 for BASIC backpacks, and then goes up by 1, ending with DIAMOND at tier 3.
      * @param baseMaxUpgradePoints - The maximum number of upgrade points that can be applied to this type of backpack, before specialties.
      * @param hasSpecialties       - If the backpack has specialties. True for all types except BASIC.
      * @param baseBackpackSize     - The size of this type of backpack, before specialties.
      */
-    public BackpackType(@Nonnull ResourceLocation identifier, @Nonnegative int tier, @Nonnegative int baseMaxUpgradePoints, boolean hasSpecialties, @Nonnull BackpackSize baseBackpackSize) {
+    public BackpackType(@Nonnull Identifier identifier, @Nonnegative int tier, @Nonnegative int baseMaxUpgradePoints, boolean hasSpecialties, @Nonnull BackpackSize baseBackpackSize) {
         Preconditions.checkNotNull(identifier, "Identifier cannot be null");
         Preconditions.checkArgument(tier >= 0, "Tier cannot be negative");
         Preconditions.checkArgument(baseMaxUpgradePoints >= 0, "Max points cannot be negative");
@@ -51,14 +51,14 @@ public class BackpackType {
 
     }
 
-    public BackpackType(@Nonnull ResourceLocation identifier, @Nonnegative int tier, @Nonnegative int maxPoints, boolean hasSpecialties, @Nonnegative int baseSizeCols, @Nonnegative int baseSizeRows) {
+    public BackpackType(@Nonnull Identifier identifier, @Nonnegative int tier, @Nonnegative int maxPoints, boolean hasSpecialties, @Nonnegative int baseSizeCols, @Nonnegative int baseSizeRows) {
         this(identifier, tier, maxPoints, hasSpecialties, new BackpackSize(baseSizeCols, baseSizeRows));
     }
 
     // Getters (all final, so no setters needed)
 
     @Nonnull
-    public ResourceLocation getIdentifier() {
+    public Identifier getIdentifier() {
         return identifier;
     }
 

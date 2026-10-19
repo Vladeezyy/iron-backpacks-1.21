@@ -1,0 +1,133 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "ironbackpacks:variant",
+    "cases": [
+      {
+        "when": "basic/none",
+        "model": {
+          "type": "minecraft:model",
+          "model": "ironbackpacks:item/backpack/basic/none",
+          "tints": [
+            {
+              "type": "minecraft:constant",
+              "value": -1
+            },
+            {
+              "type": "ironbackpacks:backpack_color"
+            }
+          ]
+        }
+      },
+      {
+        "when": "diamond/storage",
+        "model": {
+          "type": "minecraft:model",
+          "model": "ironbackpacks:item/backpack/diamond/storage",
+          "tints": [
+            {
+              "type": "minecraft:constant",
+              "value": -1
+            },
+            {
+              "type": "ironbackpacks:backpack_color"
+            }
+          ]
+        }
+      },
+      {
+        "when": "diamond/upgrade",
+        "model": {
+          "type": "minecraft:model",
+          "model": "ironbackpacks:item/backpack/diamond/upgrade",
+          "tints": [
+            {
+              "type": "minecraft:constant",
+              "value": -1
+            },
+            {
+              "type": "ironbackpacks:backpack_color"
+            }
+          ]
+        }
+      },
+      {
+        "when": "gold/storage",
+        "model": {
+          "type": "minecraft:model",
+          "model": "ironbackpacks:item/backpack/gold/storage",
+          "tints": [
+            {
+              "type": "minecraft:constant",
+              "value": -1
+            },
+            {
+              "type": "ironbackpacks:backpack_color"
+            }
+          ]
+        }
+      },
+      {
+        "when": "gold/upgrade",
+        "model": {
+          "type": "minecraft:model",
+          "model": "ironbackpacks:item/backpack/gold/upgrade",
+          "tints": [
+            {
+              "type": "minecraft:constant",
+              "value": -1
+            },
+            {
+              "type": "ironbackpacks:backpack_color"
+            }
+          ]
+        }
+      },
+      {
+        "when": "iron/storage",
+        "model": {
+          "type": "minecraft:model",
+          "model": "ironbackpacks:item/backpack/iron/storage",
+          "tints": [
+            {
+              "type": "minecraft:constant",
+              "value": -1
+            },
+            {
+              "type": "ironbackpacks:backpack_color"
+            }
+          ]
+        }
+      },
+      {
+        "when": "iron/upgrade",
+        "model": {
+          "type": "minecraft:model",
+          "model": "ironbackpacks:item/backpack/iron/upgrade",
+          "tints": [
+            {
+              "type": "minecraft:constant",
+              "value": -1
+            },
+            {
+              "type": "ironbackpacks:backpack_color"
+            }
+          ]
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "ironbackpacks:item/backpack/null",
+      "tints": [
+        {
+          "type": "minecraft:constant",
+          "value": -1
+        },
+        {
+          "type": "ironbackpacks:backpack_color"
+        }
+      ]
+    }
+  }
+}

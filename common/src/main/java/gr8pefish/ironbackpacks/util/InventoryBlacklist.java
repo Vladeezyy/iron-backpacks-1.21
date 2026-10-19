@@ -24,7 +24,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
@@ -76,10 +76,10 @@ public class InventoryBlacklist implements IInventoryBlacklist {
 
             String[] subTags = key.split("\\."); // Allow sub tags defined as `foo.bar` to look for a
             for (String subTag : subTags) {
-                if (tag.isEmpty() || tag.getTagType(subTag) != Tag.TAG_COMPOUND)
+                if (tag.isEmpty() || !(tag.get(subTag) instanceof CompoundTag))
                     return tag.contains(subTag);
 
-                tag = tag.getCompound(subTag);
+                tag = tag.getCompoundOrEmpty(subTag);
             }
         }
 
@@ -104,7 +104,7 @@ public class InventoryBlacklist implements IInventoryBlacklist {
         public static class Serializer implements JsonSerializer<ItemEntry>, JsonDeserializer<ItemEntry> {
             @Override
             public ItemEntry deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-                ResourceLocation id = ResourceLocation.tryParse(json.getAsString());
+                Identifier id = Identifier.tryParse(json.getAsString());
                 return new ItemEntry(id == null ? null : BuiltInRegistries.ITEM.getOptional(id).orElse(null));
             }
 

@@ -13,11 +13,13 @@ public class ColorUtil {
      */
     @javax.annotation.Nullable
     public static net.minecraft.world.item.DyeColor dyeColorOf(@Nonnull ItemStack stack) {
-        if (stack.getItem() instanceof net.minecraft.world.item.DyeItem dye)
-            return dye.getDyeColor();
+        // 26.x: dye items carry their colour as a component
+        net.minecraft.world.item.DyeColor dye = stack.get(net.minecraft.core.component.DataComponents.DYE);
+        if (dye != null)
+            return dye;
         for (net.minecraft.world.item.DyeColor color : net.minecraft.world.item.DyeColor.values()) {
             var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM,
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("c", "dyes/" + color.getName()));
+                    net.minecraft.resources.Identifier.fromNamespaceAndPath("c", "dyes/" + color.getName()));
             if (stack.is(tag))
                 return color;
         }

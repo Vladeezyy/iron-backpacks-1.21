@@ -11,7 +11,7 @@
   "jei.ironbackpacks.increaseTier.desc": "To increase the tier of a backpack, simply follow the desired §2crafting recipe§r. You may have to choose between different types of backpacks when upgrading. Choose wisely!",
   "jei.ironbackpacks.increaseTier.desc2": "Note that when upgrading to a new tier you automatically keep all items, upgrades, configurations, etc. present in the previous backpack!",
   "jei.ironbackpacks.increaseTier.name": "Increase Backpack Tier",
-  "key.categories.ironbackpacks": "Iron Backpacks",
+  "key.category.ironbackpacks.main": "Iron Backpacks",
   "key.ironbackpacks.equip": "Equip/Unequip Backpack (Disabled)",
   "key.ironbackpacks.open": "Open Backpack",
   "tooltip.ironbackpacks.backpack.emphasis.storage": "Storage Emphasis",

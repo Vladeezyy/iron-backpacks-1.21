@@ -7,15 +7,9 @@
     "III"
   ],
   "key": {
-    "I": {
-      "tag": "c:ingots/iron"
-    },
-    "B": {
-      "item": "ironbackpacks:backpack"
-    },
-    "C": {
-      "tag": "c:chests/wooden"
-    }
+    "I": "#c:ingots/iron",
+    "B": "ironbackpacks:backpack",
+    "C": "#c:chests/wooden"
   },
   "backpack_type": "ironbackpacks:iron",
   "specialty": "storage",

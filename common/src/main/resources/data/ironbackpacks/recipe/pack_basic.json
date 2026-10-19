@@ -7,15 +7,9 @@
     "WLW"
   ],
   "key": {
-    "W": {
-      "tag": "minecraft:wool"
-    },
-    "L": {
-      "tag": "c:leathers"
-    },
-    "C": {
-      "tag": "c:chests/wooden"
-    }
+    "W": "#minecraft:wool",
+    "L": "#c:leathers",
+    "C": "#c:chests/wooden"
   },
   "backpack_type": "ironbackpacks:basic",
   "specialty": "none"

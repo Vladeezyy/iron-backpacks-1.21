@@ -22,7 +22,7 @@ import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
@@ -103,7 +103,7 @@ public class ContainerBackpack extends AbstractContainerMenu {
     public static ItemStack getBackpackFor(@Nonnull Player player, @Nonnull Mode mode, @Nonnull InteractionHand hand) {
         return switch (mode) {
             case HELD, INVENTORY -> Utils.getNonequippedBackpackFromInventory(player, hand);
-            case EQUIPPED -> player.level().isClientSide ? EquippedBackpackClient.equipped : Services.PLATFORM.getEquippedBackpack(player);
+            case EQUIPPED -> player.level().isClientSide() ? EquippedBackpackClient.equipped : Services.PLATFORM.getEquippedBackpack(player);
         };
     }
 
@@ -139,9 +139,12 @@ public class ContainerBackpack extends AbstractContainerMenu {
             // the open key: 1.12 skipped the latch check of a right click (anyone's latched backpack opened) and the
             // opening sound (gr8pefish/IronBackpacks#243)
             BackpackInfo info = BackpackInfo.headerOf(selected);
-            if (info.hasUpgrade(RegistrarIronBackpacks.get(RegistrarIronBackpacks.UPGRADE_LOCK)) && !player.getGameProfile().getId().equals(info.getOwner()))
+            if (info.hasUpgrade(RegistrarIronBackpacks.get(RegistrarIronBackpacks.UPGRADE_LOCK)) && !player.getUUID().equals(info.getOwner()))
                 return;
-            player.playNotifySound(RegistrarIronBackpacks.BACKPACK_OPEN.get(), net.minecraft.sounds.SoundSource.NEUTRAL, 1.0F, 1.0F);
+            // to this player only (26.x has no ServerPlayer.playNotifySound)
+            player.connection.send(new net.minecraft.network.protocol.game.ClientboundSoundPacket(
+                    net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.wrapAsHolder(RegistrarIronBackpacks.BACKPACK_OPEN.get()),
+                    net.minecraft.sounds.SoundSource.NEUTRAL, player.getX(), player.getY(), player.getZ(), 1.0F, 1.0F, player.getRandom().nextLong()));
         }
 
         Services.PLATFORM.openBackpackMenu(player, new SimpleMenuProvider((windowId, inventory, p) -> create(windowId, p, mode, hand), selected.getHoverName()),
@@ -161,7 +164,7 @@ public class ContainerBackpack extends AbstractContainerMenu {
     @Override
     public boolean stillValid(@Nonnull Player player) {
         // the server closes the GUI when this turns false (1.12: always true); the client has its own copies
-        return player.level().isClientSide || backpackPresent(player);
+        return player.level().isClientSide() || backpackPresent(player);
     }
 
     @Nonnull
@@ -203,14 +206,14 @@ public class ContainerBackpack extends AbstractContainerMenu {
     }
 
     @Override
-    public void clicked(int slotId, int button, @Nonnull ClickType flag, @Nonnull Player player) {
+    public void clicked(int slotId, int button, @Nonnull ContainerInput flag, @Nonnull Player player) {
         if (slotId < 0 || slotId >= slots.size()) {
             super.clicked(slotId, button, flag, player);
             return;
         }
 
         // clicks that arrive in the same tick as the backpack left (before stillValid closes the GUI) do nothing
-        if (!player.level().isClientSide && !backpackPresent(player))
+        if (!player.level().isClientSide() && !backpackPresent(player))
             return;
 
         Slot slot = slots.get(slotId);
@@ -232,7 +235,7 @@ public class ContainerBackpack extends AbstractContainerMenu {
 
     // Helper
 
-    public boolean canTake(int slotId, Slot slot, int button, Player player, ClickType clickType) {
+    public boolean canTake(int slotId, Slot slot, int button, Player player, ContainerInput clickType) {
         // Block interaction with open backpack slot
         if (slotId == blocked)
             return false;
@@ -251,13 +254,13 @@ public class ContainerBackpack extends AbstractContainerMenu {
         }
 
         // Moving items by shift clicking them
-        if(clickType == ClickType.QUICK_MOVE){
+        if(clickType == ContainerInput.QUICK_MOVE){
             if (slotStack.getItem() instanceof IBackpack) // TODO - Check for nesting upgrades and properly handle
                 return false;
         }
 
         // Hotbar swapping via number keys (1.21 also swaps with the offhand: button 40, a slot outside this container)
-        if (clickType == ClickType.SWAP) {
+        if (clickType == ContainerInput.SWAP) {
             ItemStack hotbarStack;
             if (button == Inventory.SLOT_OFFHAND) {
                 hotbarStack = player.getOffhandItem();
@@ -368,7 +371,7 @@ public class ContainerBackpack extends AbstractContainerMenu {
                     return index != blocked && (!slotStack.isEmpty() && !ItemStack.matches(slotStack, blockedStack));
                 }
             });
-            if (x == inventoryPlayer.selected && hand == InteractionHand.MAIN_HAND)
+            if (x == inventoryPlayer.getSelectedSlot() && hand == InteractionHand.MAIN_HAND)
                 blocked = slot.index;
         }
     }

@@ -7,15 +7,9 @@
     "DDD"
   ],
   "key": {
-    "D": {
-      "tag": "c:gems/diamond"
-    },
-    "B": {
-      "item": "ironbackpacks:backpack"
-    },
-    "C": {
-      "tag": "c:chests/wooden"
-    }
+    "D": "#c:gems/diamond",
+    "B": "ironbackpacks:backpack",
+    "C": "#c:chests/wooden"
   },
   "backpack_type": "ironbackpacks:diamond",
   "specialty": "storage",

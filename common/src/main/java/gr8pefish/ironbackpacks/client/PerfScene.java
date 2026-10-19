@@ -89,7 +89,7 @@ public final class PerfScene {
             t += 270;
         }
         at(t, mc -> {
-            server(mc, p -> clearDrops(p.serverLevel()));
+            server(mc, p -> clearDrops(p.level()));
             IronBackpacks.LOGGER.info("[perf] DONE");
             mc.stop();
         });
@@ -98,6 +98,7 @@ public final class PerfScene {
     /** End of every client tick (called from ClientEventHandler.onClientTick). */
     public static void onTick(Minecraft mc) {
         if (!ENABLED) return;
+        if (DevScene.createWorld(mc)) return;
         if (mc.player == null || mc.getSingleplayerServer() == null) return;
         if (tick == 0 && STEPS.isEmpty()) initSteps();
         // the window is usually unfocused while this runs: never pause, or the integrated server stops
@@ -138,17 +139,17 @@ public final class PerfScene {
 
     /** A stone platform high in the air east of the spawn, the player in survival standing on it. */
     private static void platform(ServerPlayer player) {
-        ServerLevel level = player.serverLevel();
-        level.setDayTime(6000);
-        level.setWeatherParameters(6000, 0, false, false);
-        BlockPos spawn = level.getSharedSpawnPos();
+        ServerLevel level = player.level();
+        DevScene.command(level, "time set noon");
+        DevScene.command(level, "weather clear");
+        BlockPos spawn = level.getRespawnData().pos();
         base = new BlockPos(spawn.getX() + 200, 150, spawn.getZ());
         for (BlockPos p : BlockPos.betweenClosed(base.offset(-12, -1, -12), base.offset(12, 3, 12))) {
             level.setBlock(p, p.getY() == base.getY() - 1 ? Blocks.SMOOTH_STONE.defaultBlockState() : Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
         }
         clearDrops(level);
         player.setGameMode(GameType.SURVIVAL);
-        player.teleportTo(level, base.getX() + 0.5, base.getY(), base.getZ() + 0.5, 0, 30);
+        player.teleportTo(level, base.getX() + 0.5, base.getY(), base.getZ() + 0.5, java.util.Set.of(), 0, 30, true);
     }
 
     private static ItemStack fullShulker() {
@@ -177,7 +178,7 @@ public final class PerfScene {
     }
 
     private static void drop(ServerPlayer player, boolean backpacks) {
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = player.level();
         clearDrops(level);
         ItemStack stack = backpacks ? fullBackpack(false) : fullShulker();
         for (int i = 0; i < 400; i++) {

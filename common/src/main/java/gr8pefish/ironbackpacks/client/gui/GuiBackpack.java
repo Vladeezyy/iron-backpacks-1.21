@@ -6,10 +6,11 @@ import com.google.common.base.Preconditions;
 
 import gr8pefish.ironbackpacks.container.ContainerBackpack;
 import gr8pefish.ironbackpacks.core.RegistrarIronBackpacks;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
@@ -20,7 +21,7 @@ import net.minecraft.world.entity.player.Inventory;
 public class GuiBackpack extends AbstractContainerScreen<ContainerBackpack> {
 
     /** 1.12 GuiTextureResource("backpack_gui", 512, 512). */
-    private static final ResourceLocation CONTAINER_TEX = RegistrarIronBackpacks.id("textures/gui/backpack_gui.png");
+    private static final Identifier CONTAINER_TEX = RegistrarIronBackpacks.id("textures/gui/backpack_gui.png");
     private static final int TEX_WIDTH = 512;
     private static final int TEX_HEIGHT = 512;
 
@@ -33,32 +34,25 @@ public class GuiBackpack extends AbstractContainerScreen<ContainerBackpack> {
      * @param containerBackpack - The container to initialize with.
      */
     public GuiBackpack(@Nonnull ContainerBackpack containerBackpack, @Nonnull Inventory inventory, @Nonnull Component title) {
-        super(containerBackpack, inventory, title);
-
-        Preconditions.checkNotNull(containerBackpack, "ContainerBackpack cannot be null");
+        // 26.x: the size is final, given to the constructor
+        super(Preconditions.checkNotNull(containerBackpack, "ContainerBackpack cannot be null"), inventory, title,
+                containerBackpack.getWidth(), containerBackpack.getHeight());
 
         container = containerBackpack;
-        imageWidth = container.getWidth();
-        imageHeight = container.getHeight();
     }
 
     @Override
-    public void render(@Nonnull GuiGraphics g, int mouseX, int mouseY, float partialTicks) {
-        super.render(g, mouseX, mouseY, partialTicks);
-        this.renderTooltip(g, mouseX, mouseY);
-    }
-
-    @Override
-    protected void renderLabels(@Nonnull GuiGraphics g, int mouseX, int mouseY) {
-        g.drawString(font, container.getName(), container.getBorderSide() + 1, 6, 0x404040, false);
+    protected void extractLabels(@Nonnull GuiGraphicsExtractor g, int mouseX, int mouseY) {
+        // 26.x text colours are ARGB: an alpha of 0 is invisible
+        g.text(font, container.getName(), container.getBorderSide() + 1, 6, 0xFF404040, false);
         int invTitleX = container.getPlayerInvXOffset() + 1;
         int invTitleY = container.getBorderTop() + container.getContainerInvHeight() + 3;
-        g.drawString(font, Component.translatable("container.inventory"), invTitleX, invTitleY, 0x404040, false);
+        g.text(font, Component.translatable("container.inventory"), invTitleX, invTitleY, 0xFF404040, false);
     }
 
     /** 1.12 GuiTextureResource.drawQuad: part of the 512x512 texture, unscaled. */
-    private static void quad(GuiGraphics g, int x, int y, int u, int v, int w, int h) {
-        g.blit(CONTAINER_TEX, x, y, u, v, w, h, TEX_WIDTH, TEX_HEIGHT);
+    private static void quad(GuiGraphicsExtractor g, int x, int y, int u, int v, int w, int h) {
+        g.blit(RenderPipelines.GUI_TEXTURED, CONTAINER_TEX, x, y, u, v, w, h, TEX_WIDTH, TEX_HEIGHT);
     }
 
     /*
@@ -66,7 +60,8 @@ public class GuiBackpack extends AbstractContainerScreen<ContainerBackpack> {
      * TODO: Make bottom area sides "full" when >9 columns wide
      */
     @Override
-    protected void renderBg(@Nonnull GuiGraphics g, float partialTicks, int mouseX, int mouseY) {
+    public void extractBackground(@Nonnull GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTicks) {
+        super.extractBackground(g, mouseX, mouseY, partialTicks);
         int x = leftPos;
         int y = topPos;
 

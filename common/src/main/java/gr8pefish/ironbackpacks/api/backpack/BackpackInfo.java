@@ -25,7 +25,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 
@@ -213,27 +213,27 @@ public class BackpackInfo {
     /**
      * The stored form of a backpack's info: the {@link RegistrarIronBackpacks#PACK_INFO} data component.
      */
-    public record Data(ResourceLocation type, BackpackSpecialty spec, Optional<UUID> owner, Optional<Integer> color,
-                       List<ResourceLocation> upgrades) {
+    public record Data(Identifier type, BackpackSpecialty spec, Optional<UUID> owner, Optional<Integer> color,
+                       List<Identifier> upgrades) {
         public static final Codec<Data> CODEC = RecordCodecBuilder.create(i -> i.group(
-                ResourceLocation.CODEC.fieldOf("type").forGetter(Data::type),
+                Identifier.CODEC.fieldOf("type").forGetter(Data::type),
                 BackpackSpecialty.CODEC.fieldOf("spec").forGetter(Data::spec),
                 UUIDUtil.CODEC.optionalFieldOf("own").forGetter(Data::owner),
                 Codec.INT.optionalFieldOf("color").forGetter(Data::color),
-                ResourceLocation.CODEC.listOf().optionalFieldOf("upgrade", List.of()).forGetter(Data::upgrades)
+                Identifier.CODEC.listOf().optionalFieldOf("upgrade", List.of()).forGetter(Data::upgrades)
         ).apply(i, Data::new));
         public static final StreamCodec<ByteBuf, Data> STREAM_CODEC = StreamCodec.composite(
-                ResourceLocation.STREAM_CODEC, Data::type,
+                Identifier.STREAM_CODEC, Data::type,
                 BackpackSpecialty.STREAM_CODEC, Data::spec,
                 ByteBufCodecs.optional(UUIDUtil.STREAM_CODEC), Data::owner,
                 ByteBufCodecs.optional(ByteBufCodecs.INT), Data::color,
-                ResourceLocation.STREAM_CODEC.apply(ByteBufCodecs.list()), Data::upgrades,
+                Identifier.STREAM_CODEC.apply(ByteBufCodecs.list()), Data::upgrades,
                 Data::new);
     }
 
     @Nonnull
     public Data serialize() {
-        List<ResourceLocation> installedUpgrades = Lists.newArrayList();
+        List<Identifier> installedUpgrades = Lists.newArrayList();
         for (BackpackUpgrade backpackUpgrade : upgrades)
             installedUpgrades.add(backpackUpgrade.getIdentifier());
 
@@ -248,7 +248,7 @@ public class BackpackInfo {
         data.color().ifPresent(color -> rgbColor = color);
 
         // Deserialize upgrade
-        for (ResourceLocation identifier : data.upgrades()) {
+        for (Identifier identifier : data.upgrades()) {
             BackpackUpgrade backpackUpgrade = IronBackpacksAPI.getUpgrade(identifier);
             if (!backpackUpgrade.isNull())
                 upgrades.add(backpackUpgrade);

@@ -13,7 +13,7 @@ import gr8pefish.ironbackpacks.api.upgrade.BackpackUpgrade;
 import gr8pefish.ironbackpacks.core.RegistrarIronBackpacks;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 
@@ -29,9 +29,9 @@ public class IronBackpacksAPI {
     // Fields
 
     /**
-     * Public {@link ResourceLocation} for NULL identifiers.
+     * Public {@link Identifier} for NULL identifiers.
      */
-    public static final ResourceLocation NULL = ResourceLocation.fromNamespaceAndPath("ironbackpacks", "null");
+    public static final Identifier NULL = Identifier.fromNamespaceAndPath("ironbackpacks", "null");
     private static IInventoryBlacklist INVENTORY_BLACKLIST = null;
 
     /**
@@ -53,13 +53,13 @@ public class IronBackpacksAPI {
      * Get the {@link BackpackType} from its registry given the BackpackType's identifier.
      * //TODO: Null safety here?
      *
-     * @param identifier - The unique {@link ResourceLocation} of the BackpackType
+     * @param identifier - The unique {@link Identifier} of the BackpackType
      * @return - The BackpackType found
      */
     @Nonnull
-    public static BackpackType getBackpackType(@Nonnull ResourceLocation identifier) {
+    public static BackpackType getBackpackType(@Nonnull Identifier identifier) {
         Preconditions.checkNotNull(identifier, "Identifier cannot be null");
-        return getBackpackTypeRegistry().get(identifier);
+        return getBackpackTypeRegistry().getValue(identifier);
     }
 
     /**
@@ -86,13 +86,13 @@ public class IronBackpacksAPI {
      * Get the {@link BackpackUpgrade} from its registry given the BackpackUpgrade's identifier.
      * //TODO: Null safety here?
      *
-     * @param identifier - The unique {@link ResourceLocation} of the BackpackUpgrade
+     * @param identifier - The unique {@link Identifier} of the BackpackUpgrade
      * @return - The BackpackUpgrade found
      */
     @Nonnull
-    public static BackpackUpgrade getUpgrade(@Nonnull ResourceLocation identifier) {
+    public static BackpackUpgrade getUpgrade(@Nonnull Identifier identifier) {
         Preconditions.checkNotNull(identifier, "Identifier cannot be null");
-        return getUpgradeRegistry().get(identifier);
+        return getUpgradeRegistry().getValue(identifier);
     }
 
     /**
@@ -135,6 +135,18 @@ public class IronBackpacksAPI {
         ItemStack stack = new ItemStack(RegistrarIronBackpacks.BACKPACK.get());
         BackpackInfo backpackInfo = new BackpackInfo(backpackVariant);
         return applyPackInfo(stack, backpackInfo);
+    }
+
+    /**
+     * The backpack of a variant as an item template (a recipe result). 26.x reads recipes before the item components
+     * are bound, when no ItemStack can be made yet.
+     */
+    @Nonnull
+    public static net.minecraft.world.item.ItemStackTemplate getTemplate(@Nonnull BackpackVariant backpackVariant) {
+        Preconditions.checkNotNull(backpackVariant, "BackpackVariant cannot be null");
+
+        return new net.minecraft.world.item.ItemStackTemplate(RegistrarIronBackpacks.BACKPACK.get(), net.minecraft.core.component.DataComponentPatch.builder()
+                .set(RegistrarIronBackpacks.PACK_INFO.get(), new BackpackInfo(backpackVariant).serialize()).build());
     }
 
     /**

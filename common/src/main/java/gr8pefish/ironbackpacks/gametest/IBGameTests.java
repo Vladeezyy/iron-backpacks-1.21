@@ -21,15 +21,13 @@ import gr8pefish.ironbackpacks.item.ItemBackpack;
 import gr8pefish.ironbackpacks.network.RequestAction;
 import gr8pefish.ironbackpacks.util.InventoryBlacklist;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.gametest.framework.TestFunction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.inventory.AnvilMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
@@ -70,12 +68,19 @@ public final class IBGameTests {
         TESTS.put("open_key_respects_latch", IBGameTests::openKeyLatch);
     }
 
-    @GameTestGenerator
-    public static Collection<TestFunction> generate() {
-        List<TestFunction> functions = new ArrayList<>();
-        TESTS.forEach((name, body) -> functions.add(new TestFunction(IronBackpacks.MODID, IronBackpacks.MODID + "." + name, STRUCTURE,
-                net.minecraft.world.level.block.Rotation.NONE, 100, 0, true, false, 1, 1, false, body)));
-        return functions;
+    /** The tests by name; the loaders register them (26.x: a test function registry and test instances). */
+    public static Map<String, Consumer<GameTestHelper>> tests() {
+        return java.util.Collections.unmodifiableMap(TESTS);
+    }
+
+    /** The structure every test runs in. */
+    public static Identifier structure() {
+        return Identifier.parse(STRUCTURE);
+    }
+
+    /** Runs one test by name (the Fabric @GameTest methods). */
+    public static void run(String name, GameTestHelper helper) {
+        TESTS.get(name).accept(helper);
     }
 
     // --- helpers --------------------------------------------------------------------------------------------------
@@ -88,7 +93,8 @@ public final class IBGameTests {
     static ServerPlayer player(GameTestHelper helper) {
         var cookie = net.minecraft.server.network.CommonListenerCookie.createInitial(
                 new com.mojang.authlib.GameProfile(UUID.randomUUID(), "test-player"), false);
-        ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), cookie.gameProfile(), cookie.clientInformation());
+        // a subclass: NeoForge 26.x config sync skips those (a plain ServerPlayer without a configuration phase crashes it)
+        ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), cookie.gameProfile(), cookie.clientInformation()) {};
         var connection = new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
         new io.netty.channel.embedded.EmbeddedChannel(connection);
         // a client with every mod's channels, so menus and other mods' sync packets can be sent
@@ -96,7 +102,7 @@ public final class IBGameTests {
         helper.getLevel().getServer().getPlayerList().placeNewPlayer(connection, player, cookie);
         player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
         var pos = helper.absolutePos(new BlockPos(2, 1, 2)).getBottomCenter();
-        player.moveTo(pos.x, pos.y, pos.z, 0, 0);
+        player.snapTo(pos.x, pos.y, pos.z, 0, 0);
         return player;
     }
 
@@ -111,8 +117,8 @@ public final class IBGameTests {
     private static ItemStack craft(GameTestHelper helper, int width, int height, ItemStack... grid) {
         CraftingInput input = CraftingInput.of(width, height, List.of(grid));
         var level = helper.getLevel();
-        return level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level)
-                .map(r -> r.value().assemble(input, level.registryAccess())).orElse(ItemStack.EMPTY);
+        return level.recipeAccess().getRecipeFor(RecipeType.CRAFTING, input, level)
+                .map(r -> r.value().assemble(input)).orElse(ItemStack.EMPTY);
     }
 
     // --- tests ----------------------------------------------------------------------------------------------------
@@ -215,8 +221,9 @@ public final class IBGameTests {
             ItemStack result = craft(helper, 3, 3, m, s, m, s, blank, s, m, s, m);
             check(helper, RegistrarIronBackpacks.id(names[i]).equals(result.get(RegistrarIronBackpacks.UPGRADE_ID.get())), names[i] + " " + result);
         }
-        boolean everlastingRecipe = helper.getLevel().getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING).stream().anyMatch(r ->
-                RegistrarIronBackpacks.id("everlasting").equals(r.value().getResultItem(helper.getLevel().registryAccess()).get(RegistrarIronBackpacks.UPGRADE_ID.get())));
+        boolean everlastingRecipe = helper.getLevel().recipeAccess().getRecipes().stream().anyMatch(r ->
+                r.value().display().stream().anyMatch(d -> d.result() instanceof net.minecraft.world.item.crafting.display.SlotDisplay.ItemStackSlotDisplay result
+                        && RegistrarIronBackpacks.id("everlasting").equals(result.stack().get(RegistrarIronBackpacks.UPGRADE_ID.get()))));
         check(helper, !everlastingRecipe, "everlasting has no recipe in 1.12.2");
         helper.succeed();
     }
@@ -261,7 +268,7 @@ public final class IBGameTests {
         check(helper, upgrade("damage_bar").getIdentifier().equals(removed.get(RegistrarIronBackpacks.UPGRADE_ID.get())), "removed " + removed);
         anvil.getSlot(2).onTake(player, removed);
         boolean packBack = false, shearsBack = false;
-        for (ItemStack stack : player.getInventory().items) {
+        for (ItemStack stack : player.getInventory().getNonEquipmentItems()) {
             if (stack.getItem() instanceof ItemBackpack && BackpackInfo.fromStack(stack).getUpgrades().isEmpty()) packBack = true;
             if (stack.is(Items.SHEARS)) shearsBack = true;
         }
@@ -276,13 +283,13 @@ public final class IBGameTests {
         ServerPlayer other = player(helper);
         ItemStack stack = EventHandler.tryUpgradeBackpack(pack("basic", BackpackSpecialty.NONE), IronBackpacksAPI.getStack(upgrade("lock")));
         owner.setItemInHand(InteractionHand.MAIN_HAND, stack);
-        check(helper, owner.getItemInHand(InteractionHand.MAIN_HAND).use(helper.getLevel(), owner, InteractionHand.MAIN_HAND).getResult().consumesAction(), "owner opens");
+        check(helper, owner.getItemInHand(InteractionHand.MAIN_HAND).use(helper.getLevel(), owner, InteractionHand.MAIN_HAND).consumesAction(), "owner opens");
         check(helper, owner.getUUID().equals(BackpackInfo.fromStack(owner.getItemInHand(InteractionHand.MAIN_HAND)).getOwner()), "owner set");
         check(helper, owner.containerMenu instanceof ContainerBackpack, "menu open");
         owner.closeContainer();
         ItemStack moved = owner.getItemInHand(InteractionHand.MAIN_HAND).copy();
         other.setItemInHand(InteractionHand.MAIN_HAND, moved);
-        check(helper, !moved.use(helper.getLevel(), other, InteractionHand.MAIN_HAND).getResult().consumesAction(), "latched");
+        check(helper, !moved.use(helper.getLevel(), other, InteractionHand.MAIN_HAND).consumesAction(), "latched");
         check(helper, !(other.containerMenu instanceof ContainerBackpack), "no menu for others");
         owner.discard();
         other.discard();
@@ -318,11 +325,7 @@ public final class IBGameTests {
         var pos = helper.absolutePos(new BlockPos(1, 2, 1)).getCenter();
         ItemEntity entity = new ItemEntity(helper.getLevel(), pos.x, pos.y, pos.z, stack);
         helper.getLevel().addFreshEntity(entity);
-        // through the saved "Age" (field names differ in a release jar)
-        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
-        entity.saveWithoutId(tag);
-        tag.putShort("Age", (short) 5999);
-        entity.load(tag);
+        entity.makeFakeItem();                                // age 5999: expires on the next tick
         entity.tick();
         return entity;
     }
@@ -345,20 +348,20 @@ public final class IBGameTests {
     /** The open backpack's slot can't be clicked, number-key swapped or shift-moved; backpacks can't go in. */
     private static void menuBlocks(GameTestHelper helper) {
         ServerPlayer player = player(helper);
-        player.getInventory().selected = 2;
+        player.getInventory().setSelectedSlot(2);
         player.setItemInHand(InteractionHand.MAIN_HAND, pack("basic", BackpackSpecialty.NONE));
         player.getInventory().setItem(0, pack("iron", BackpackSpecialty.STORAGE));
         ContainerBackpack.open(player, ContainerBackpack.Mode.HELD, InteractionHand.MAIN_HAND);
         ContainerBackpack menu = (ContainerBackpack) player.containerMenu;
         int heldSlot = 18 + 27 + 2;
-        menu.clicked(heldSlot, 0, ClickType.PICKUP, player);
+        menu.clicked(heldSlot, 0, ContainerInput.PICKUP, player);
         check(helper, menu.getCarried().isEmpty() && player.getInventory().getItem(2).getItem() instanceof ItemBackpack, "held backpack can't be picked up");
-        menu.clicked(0, 2, ClickType.SWAP, player);
+        menu.clicked(0, 2, ContainerInput.SWAP, player);
         check(helper, menu.getSlot(0).getItem().isEmpty(), "no swap with the held backpack");
-        menu.clicked(18 + 27, 0, ClickType.QUICK_MOVE, player);
+        menu.clicked(18 + 27, 0, ContainerInput.QUICK_MOVE, player);
         check(helper, menu.getSlot(0).getItem().isEmpty(), "other backpacks can't be shift-moved in");
-        menu.clicked(18 + 27, 0, ClickType.PICKUP, player);
-        menu.clicked(0, 0, ClickType.PICKUP, player);
+        menu.clicked(18 + 27, 0, ContainerInput.PICKUP, player);
+        menu.clicked(0, 0, ContainerInput.PICKUP, player);
         check(helper, menu.getSlot(0).getItem().isEmpty() && menu.getCarried().getItem() instanceof ItemBackpack, "backpacks can't be put in");
         player.closeContainer();
         player.discard();
@@ -371,7 +374,7 @@ public final class IBGameTests {
         player.getInventory().setItem(9, new ItemStack(Items.EMERALD, 12));
         ContainerBackpack.open(player, ContainerBackpack.Mode.HELD, InteractionHand.MAIN_HAND);
         ContainerBackpack menu = (ContainerBackpack) player.containerMenu;
-        menu.clicked(18, 0, ClickType.QUICK_MOVE, player);   // first main inventory slot -> backpack
+        menu.clicked(18, 0, ContainerInput.QUICK_MOVE, player);   // first main inventory slot -> backpack
         check(helper, menu.getSlot(0).getItem().is(Items.EMERALD), "moved in");
         player.closeContainer();
         BackpackInfo info = BackpackInfo.fromStack(player.getItemInHand(InteractionHand.MAIN_HAND));
@@ -388,7 +391,7 @@ public final class IBGameTests {
             player.getInventory().setItem(9, new ItemStack(Items.TNT, 4));
             ContainerBackpack.open(player, ContainerBackpack.Mode.HELD, InteractionHand.MAIN_HAND);
             ContainerBackpack menu = (ContainerBackpack) player.containerMenu;
-            menu.clicked(18, 0, ClickType.QUICK_MOVE, player);
+            menu.clicked(18, 0, ContainerInput.QUICK_MOVE, player);
             check(helper, menu.getSlot(0).getItem().isEmpty(), "blacklisted item stays out");
             player.closeContainer();
         } finally {
@@ -405,7 +408,7 @@ public final class IBGameTests {
         RequestAction.OPEN_BACKPACK.handle(player);
         check(helper, player.containerMenu instanceof ContainerBackpack c && c.getBackpackSize().getTotalSize() == 45, "gold upgrade pack opened");
         ContainerBackpack menu = (ContainerBackpack) player.containerMenu;
-        menu.clicked(45 + 11, 0, ClickType.PICKUP, player);   // inventory slot 20 is menu slot 45 + 11
+        menu.clicked(45 + 11, 0, ContainerInput.PICKUP, player);   // inventory slot 20 is menu slot 45 + 11
         check(helper, menu.getCarried().isEmpty(), "opened backpack blocked");
         player.closeContainer();
         player.discard();
@@ -413,10 +416,10 @@ public final class IBGameTests {
     }
 
     private static void names(GameTestHelper helper) {
-        check(helper, pack("diamond", BackpackSpecialty.STORAGE).getDescriptionId().equals("item.ironbackpacks.backpack.ironbackpacks.diamond"), "pack key");
-        check(helper, IronBackpacksAPI.getStack(upgrade("lock")).getDescriptionId().equals("upgrade.ironbackpacks.lock"), "upgrade key");
-        check(helper, new ItemStack(RegistrarIronBackpacks.UPGRADE.get()).getDescriptionId().equals("item.ironbackpacks.upgrade"), "blank key");
-        ResourceLocation unknown = RegistrarIronBackpacks.id("nope");
+        check(helper, nameKey(pack("diamond", BackpackSpecialty.STORAGE)).equals("item.ironbackpacks.backpack.ironbackpacks.diamond"), "pack key");
+        check(helper, nameKey(IronBackpacksAPI.getStack(upgrade("lock"))).equals("upgrade.ironbackpacks.lock"), "upgrade key");
+        check(helper, nameKey(new ItemStack(RegistrarIronBackpacks.UPGRADE.get())).equals("item.ironbackpacks.upgrade"), "blank key");
+        Identifier unknown = RegistrarIronBackpacks.id("nope");
         check(helper, IronBackpacksAPI.getUpgrade(unknown).isNull() && IronBackpacksAPI.getBackpackType(unknown).isNull(), "unknown ids are the null entries");
         helper.succeed();
     }
@@ -427,19 +430,19 @@ public final class IBGameTests {
      */
     private static void droppedWhileOpen(GameTestHelper helper) {
         ServerPlayer player = player(helper);
-        player.getInventory().selected = 0;
+        player.getInventory().setSelectedSlot(0);
         player.setItemInHand(InteractionHand.MAIN_HAND, pack("basic", BackpackSpecialty.NONE));
         player.getInventory().setItem(9, new ItemStack(Items.EMERALD, 12));
         ContainerBackpack.open(player, ContainerBackpack.Mode.HELD, InteractionHand.MAIN_HAND);
         ContainerBackpack menu = (ContainerBackpack) player.containerMenu;
-        menu.clicked(18, 0, ClickType.QUICK_MOVE, player);   // emeralds into the backpack
+        menu.clicked(18, 0, ContainerInput.QUICK_MOVE, player);   // emeralds into the backpack
         check(helper, menu.getSlot(0).getItem().is(Items.EMERALD), "moved in");
 
-        check(helper, player.drop(false), "drop key");       // the drop key: the selected stack
+        player.drop(false);                                   // the drop key: the selected stack
         ItemEntity dropped = helper.getLevel().getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(8),
                 e -> e.getItem().getItem() instanceof ItemBackpack).stream().findFirst().orElse(null);
         check(helper, dropped != null && player.getMainHandItem().isEmpty(), "backpack dropped");
-        menu.clicked(0, 0, ClickType.QUICK_MOVE, player);     // try to take the emeralds out
+        menu.clicked(0, 0, ContainerInput.QUICK_MOVE, player);     // try to take the emeralds out
         int emeralds = 0;
         for (int i = 0; i < player.getInventory().getContainerSize(); i++)
             if (player.getInventory().getItem(i).is(Items.EMERALD))
@@ -466,7 +469,7 @@ public final class IBGameTests {
         RequestAction.OPEN_BACKPACK.handle(player);
         ContainerBackpack menu = (ContainerBackpack) player.containerMenu;
         int size = menu.getBackpackSize().getTotalSize();
-        menu.clicked(size, 0, ClickType.QUICK_MOVE, player);  // inventory slot 9 -> backpack
+        menu.clicked(size, 0, ContainerInput.QUICK_MOVE, player);  // inventory slot 9 -> backpack
         check(helper, menu.getSlot(0).getItem().is(Items.DIAMOND), "moved in");
 
         ItemStack copy = player.getInventory().getItem(20).copy();
@@ -494,6 +497,11 @@ public final class IBGameTests {
         player.closeContainer();
         player.discard();
         helper.succeed();
+    }
+
+    /** The translation key of an item's name (26.x names items by component). */
+    private static String nameKey(ItemStack stack) {
+        return stack.getItemName().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t ? t.getKey() : "";
     }
 
     /** Public: Fabric creates the fabric-gametest entrypoint. */

@@ -11,7 +11,7 @@
   "jei.ironbackpacks.increaseTier.desc": "Para aumentar o nível de uma mochila, basta seguir a §2receita de fabricação§r desejada. Ao melhorar, talvez seja preciso escolher entre tipos diferentes de mochila. Escolha com sabedoria!",
   "jei.ironbackpacks.increaseTier.desc2": "Ao passar para um novo nível, você mantém automaticamente todos os itens, melhorias, configurações etc. da mochila anterior!",
   "jei.ironbackpacks.increaseTier.name": "Aumentar Nível da Mochila",
-  "key.categories.ironbackpacks": "Iron Backpacks",
+  "key.category.ironbackpacks.main": "Iron Backpacks",
   "key.ironbackpacks.equip": "Equipar/Desequipar Mochila (Desativado)",
   "key.ironbackpacks.open": "Abrir Mochila",
   "tooltip.ironbackpacks.backpack.emphasis.storage": "Foco em Armazenamento",

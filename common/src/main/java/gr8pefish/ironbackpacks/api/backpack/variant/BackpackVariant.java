@@ -2,7 +2,7 @@ package gr8pefish.ironbackpacks.api.backpack.variant;
 
 import com.google.common.base.Preconditions;
 import gr8pefish.ironbackpacks.IronBackpacks;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
@@ -28,7 +28,7 @@ public class BackpackVariant {
     @Nonnegative
     private final int maxUpgradePoints; //This is with the backpackSpecialty modifying it
     @Nonnull
-    private final ResourceLocation identifier; //TODO: will be used for serialization once implemented
+    private final Identifier identifier; //TODO: will be used for serialization once implemented
 
     // Constructor
 
@@ -42,7 +42,7 @@ public class BackpackVariant {
         this.backpackSize = type.getBaseBackpackSize().applyDefaultSizeModifierFromBackpackSpecialty(backpackSpecialty);
 
         //Generate a unique identifier from the backpackType and backpackSpecialty, ends up looking like: "ironbackpacks:variant_iron_storage"
-        this.identifier = ResourceLocation.fromNamespaceAndPath(IronBackpacks.MODID, "variant_" + type.getIdentifier().getPath() + "_" + backpackSpecialty.getName());
+        this.identifier = Identifier.fromNamespaceAndPath(IronBackpacks.MODID, "variant_" + type.getIdentifier().getPath() + "_" + backpackSpecialty.getName());
 
     }
 
@@ -69,7 +69,7 @@ public class BackpackVariant {
     }
 
     @Nonnull
-    public ResourceLocation getIdentifier() {
+    public Identifier getIdentifier() {
         return identifier;
     }
 

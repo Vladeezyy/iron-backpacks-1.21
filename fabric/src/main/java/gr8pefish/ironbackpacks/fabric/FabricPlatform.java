@@ -14,10 +14,10 @@ import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
 import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
-import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
+import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
+import net.fabricmc.fabric.api.menu.v1.ExtendedMenuType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -25,7 +25,7 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -41,7 +41,7 @@ public class FabricPlatform implements IPlatform {
     /** 1.12 capability "equipped_backpack". */
     private static final AttachmentType<ItemStack> EQUIPPED_BACKPACK = AttachmentRegistry.<ItemStack>builder()
             .persistent(ItemStack.OPTIONAL_CODEC).initializer(() -> ItemStack.EMPTY)
-            .buildAndRegister(ResourceLocation.fromNamespaceAndPath(IronBackpacks.MODID, "equipped_backpack"));
+            .buildAndRegister(Identifier.fromNamespaceAndPath(IronBackpacks.MODID, "equipped_backpack"));
 
     @Override
     public String name() {
@@ -61,13 +61,13 @@ public class FabricPlatform implements IPlatform {
     @Override
     @SuppressWarnings("unchecked")
     public <R, T extends R> Supplier<T> register(ResourceKey<? extends Registry<R>> registry, String name, Supplier<T> factory) {
-        Registry<R> target = (Registry<R>) BuiltInRegistries.REGISTRY.get(registry.location());
-        T entry = Registry.register(target, ResourceLocation.fromNamespaceAndPath(IronBackpacks.MODID, name), factory.get());
+        Registry<R> target = (Registry<R>) BuiltInRegistries.REGISTRY.getValue(registry.identifier());
+        T entry = Registry.register(target, Identifier.fromNamespaceAndPath(IronBackpacks.MODID, name), factory.get());
         return () -> entry;
     }
 
     @Override
-    public <T> Registry<T> createRegistry(ResourceKey<Registry<T>> key, ResourceLocation defaultKey) {
+    public <T> Registry<T> createRegistry(ResourceKey<Registry<T>> key, Identifier defaultKey) {
         return FabricRegistryBuilder.createDefaulted(key, defaultKey).attribute(RegistryAttribute.SYNCED).buildAndRegister();
     }
 
@@ -77,18 +77,19 @@ public class FabricPlatform implements IPlatform {
     }
 
     @Override
-    public CreativeModeTab.Builder creativeTabBuilder() {
-        return FabricItemGroup.builder();
+    public CreativeModeTab creativeTab(Component title, Supplier<ItemStack> icon, java.util.function.Consumer<java.util.function.Consumer<ItemStack>> contents) {
+        // Fabric's transitive access wideners make CreativeModeTab.Output public
+        return FabricCreativeModeTab.builder().title(title).icon(icon).displayItems((params, output) -> contents.accept(output::accept)).build();
     }
 
     @Override
     public MenuType<ContainerBackpack> createBackpackMenuType() {
-        return new ExtendedScreenHandlerType<>(ContainerBackpack::fromNetwork, ContainerBackpack.OpenData.STREAM_CODEC.cast());
+        return new ExtendedMenuType<>(ContainerBackpack::fromNetwork, ContainerBackpack.OpenData.STREAM_CODEC.cast());
     }
 
     @Override
     public void openBackpackMenu(ServerPlayer player, MenuProvider provider, ContainerBackpack.OpenData data) {
-        player.openMenu(new ExtendedScreenHandlerFactory<ContainerBackpack.OpenData>() {
+        player.openMenu(new ExtendedMenuProvider<ContainerBackpack.OpenData>() {
             @Override
             public ContainerBackpack.OpenData getScreenOpeningData(ServerPlayer p) {
                 return data;

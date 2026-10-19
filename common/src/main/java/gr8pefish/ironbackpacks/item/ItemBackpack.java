@@ -21,9 +21,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -32,47 +31,53 @@ import gr8pefish.ironbackpacks.platform.Services;
 
 public class ItemBackpack extends Item implements IBackpack {
 
-    public ItemBackpack() {
-        super(new Item.Properties().stacksTo(1));
+    public ItemBackpack(Item.Properties properties) {
+        super(properties.stacksTo(1));
     }
 
     /** 1.12 getUnlocalizedName(stack): "item.ironbackpacks.backpack.ironbackpacks.iron" and so on. */
     @Nonnull
-    @Override
     public String getDescriptionId(@Nonnull ItemStack stack) {
         // asked every frame for every dropped backpack (its name tag): the type only, the key built once per type
         BackpackType type = BackpackInfo.headerOf(stack).getVariant().getBackpackType();
         return DESCRIPTION_IDS.computeIfAbsent(type.getIdentifier(),
-                id -> super.getDescriptionId(stack) + "." + id.toString().replace(":", "."));
+                id -> getDescriptionId() + "." + id.toString().replace(":", "."));
     }
 
-    private static final java.util.Map<net.minecraft.resources.ResourceLocation, String> DESCRIPTION_IDS = new java.util.concurrent.ConcurrentHashMap<>();
+    /** 26.x names items by component; the backpack's name still depends on its type. */
+    @Nonnull
+    @Override
+    public Component getName(@Nonnull ItemStack stack) {
+        return Component.translatable(getDescriptionId(stack));
+    }
+
+    private static final java.util.Map<net.minecraft.resources.Identifier, String> DESCRIPTION_IDS = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Nonnull
     @Override
-    public InteractionResultHolder<ItemStack> use(@Nonnull Level world, @Nonnull Player player, @Nonnull InteractionHand hand) {
+    public InteractionResult use(@Nonnull Level world, @Nonnull Player player, @Nonnull InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
 
         BackpackInfo info = getBackpackInfo(held);
         if (info.getOwner() == null) {
-            info.setOwner(player.getGameProfile().getId());
+            info.setOwner(player.getUUID());
             updateBackpack(held, info);
         }
 
-        if (info.hasUpgrade(RegistrarIronBackpacks.get(RegistrarIronBackpacks.UPGRADE_LOCK)) && !player.getGameProfile().getId().equals(info.getOwner()))
-            return InteractionResultHolder.fail(held);
+        if (info.hasUpgrade(RegistrarIronBackpacks.get(RegistrarIronBackpacks.UPGRADE_LOCK)) && !player.getUUID().equals(info.getOwner()))
+            return InteractionResult.FAIL;
 
         // 1.12 World.playSound(x, y, z, ..., false) only plays on the client
-        if (world.isClientSide)
+        if (world.isClientSide())
             world.playLocalSound(player.getX(), player.getY(), player.getZ(), RegistrarIronBackpacks.BACKPACK_OPEN.get(), SoundSource.NEUTRAL, 1.0F, 1.0F, false);
         if (player instanceof ServerPlayer serverPlayer)
             ContainerBackpack.open(serverPlayer, ContainerBackpack.Mode.HELD, hand);
 
-        return InteractionResultHolder.success(held);
+        return InteractionResult.SUCCESS;
     }
 
     /** 1.12 getSubItems: every variant, by tier. */
-    public static void fillCreativeTab(CreativeModeTab.Output subItems) {
+    public static void fillCreativeTab(java.util.function.Consumer<ItemStack> subItems) {
         List<BackpackType> sortedTypes = Lists.newArrayList(IronBackpacksAPI.getBackpackTypes());
         sortedTypes.sort(Comparator.comparingInt(BackpackType::getTier));
 
@@ -107,10 +112,10 @@ public class ItemBackpack extends Item implements IBackpack {
         // read straight from the stored contents (asked twice per frame for a shown bar): no inventory copy
         int slots = BackpackInfo.headerOf(stack).getVariant().getBackpackSize().getTotalSize();
         int filled = 0;
-        for (ItemStack invStack : stack.getOrDefault(RegistrarIronBackpacks.PACK_INVENTORY.get(),
+        for (net.minecraft.world.item.ItemStackTemplate invStack : stack.getOrDefault(RegistrarIronBackpacks.PACK_INVENTORY.get(),
                 net.minecraft.world.item.component.ItemContainerContents.EMPTY).nonEmptyItems()) {
             if (filled++ >= slots) break;
-            full += invStack.getCount();
+            full += invStack.count();
             total += invStack.getMaxStackSize();
         }
         total += 64 * (slots - Math.min(filled, slots));
@@ -142,19 +147,20 @@ public class ItemBackpack extends Item implements IBackpack {
 
     /** 1.12 addInformation; extra tooltip lines were gray (GuiScreen.renderToolTip). */
     @Override
-    public void appendHoverText(@Nonnull ItemStack stack, @Nonnull TooltipContext context, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag advanced) {
+    public void appendHoverText(@Nonnull ItemStack stack, @Nonnull TooltipContext context, @Nonnull net.minecraft.world.item.component.TooltipDisplay display,
+                                @Nonnull java.util.function.Consumer<Component> tooltip, @Nonnull TooltipFlag advanced) {
         BackpackInfo backpackInfo = getBackpackInfo(stack);
         if (backpackInfo.getVariant().getBackpackType().hasSpecialties())
-            tooltip.add(gray(Component.translatable("tooltip.ironbackpacks.backpack.emphasis." + backpackInfo.getVariant().getBackpackSpecialty().getName())));
-        tooltip.add(gray(Component.translatable("tooltip.ironbackpacks.backpack.tier", backpackInfo.getVariant().getBackpackType().getTier() + 1)));
-        tooltip.add(gray(Component.translatable("tooltip.ironbackpacks.backpack.upgrade.used", backpackInfo.getPointsUsed(), backpackInfo.getMaxPoints())));
+            tooltip.accept(gray(Component.translatable("tooltip.ironbackpacks.backpack.emphasis." + backpackInfo.getVariant().getBackpackSpecialty().getName())));
+        tooltip.accept(gray(Component.translatable("tooltip.ironbackpacks.backpack.tier", backpackInfo.getVariant().getBackpackType().getTier() + 1)));
+        tooltip.accept(gray(Component.translatable("tooltip.ironbackpacks.backpack.upgrade.used", backpackInfo.getPointsUsed(), backpackInfo.getMaxPoints())));
         if (!isLeftShiftDown() && !backpackInfo.getUpgrades().isEmpty()) {
-            tooltip.add(gray(Component.translatable("tooltip.ironbackpacks.shift").withStyle(ChatFormatting.ITALIC)));
+            tooltip.accept(gray(Component.translatable("tooltip.ironbackpacks.shift").withStyle(ChatFormatting.ITALIC)));
         } else if (!backpackInfo.getUpgrades().isEmpty()) {
-            tooltip.add(Component.empty());
-            tooltip.add(gray(Component.translatable("tooltip.ironbackpacks.backpack.upgrade.list", backpackInfo.getPointsUsed(), backpackInfo.getMaxPoints())));
+            tooltip.accept(Component.empty());
+            tooltip.accept(gray(Component.translatable("tooltip.ironbackpacks.backpack.upgrade.list", backpackInfo.getPointsUsed(), backpackInfo.getMaxPoints())));
             for (BackpackUpgrade upgrade : backpackInfo.getUpgrades())
-                tooltip.add(gray(Component.literal("  - ").append(Component.translatable("upgrade.ironbackpacks." + upgrade.getIdentifier().getPath()))));
+                tooltip.accept(gray(Component.literal("  - ").append(Component.translatable("upgrade.ironbackpacks." + upgrade.getIdentifier().getPath()))));
         }
     }
 

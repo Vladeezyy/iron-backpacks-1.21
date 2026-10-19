@@ -19,15 +19,9 @@
     "MSM"
   ],
   "key": {
-    "M": {
-      "tag": "c:leathers"
-    },
-    "S": {
-      "tag": "c:strings"
-    },
-    "C": {
-      "item": "ironbackpacks:upgrade"
-    }
+    "M": "#c:leathers",
+    "S": "#c:strings",
+    "C": "ironbackpacks:upgrade"
   },
   "result": {
     "id": "ironbackpacks:upgrade",

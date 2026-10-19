@@ -25,7 +25,7 @@ public abstract class ItemEntityMixin {
     @Inject(method = "tick", at = @At("HEAD"))
     private void ironbackpacks$everlasting(CallbackInfo ci) {
         // vanilla removes the item when age reaches 6000 after this tick's increment
-        if (age >= 5999 && age != Short.MIN_VALUE && !((ItemEntity) (Object) this).level().isClientSide && UpgradeEventHandler.keepsAlive(getItem()))
+        if (age >= 5999 && age != Short.MIN_VALUE && !((ItemEntity) (Object) this).level().isClientSide() && UpgradeEventHandler.keepsAlive(getItem()))
             setUnlimitedLifetime();
     }
 }

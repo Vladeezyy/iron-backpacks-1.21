@@ -1,5 +1,6 @@
 package gr8pefish.ironbackpacks.core.recipe;
 
+import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
@@ -11,22 +12,22 @@ import gr8pefish.ironbackpacks.api.IronBackpacksAPI;
 import gr8pefish.ironbackpacks.api.backpack.BackpackInfo;
 import gr8pefish.ironbackpacks.api.backpack.variant.BackpackSpecialty;
 import gr8pefish.ironbackpacks.api.backpack.variant.BackpackVariant;
-import gr8pefish.ironbackpacks.core.RegistrarIronBackpacks;
 import gr8pefish.ironbackpacks.util.ColorUtil;
 import gr8pefish.ironbackpacks.util.Utils;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapedRecipePattern;
+import net.minecraft.world.item.crafting.display.RecipeDisplay;
 
 /**
  * Class for defining how the recipes work for coloring backpacks.
@@ -37,30 +38,56 @@ import net.minecraft.world.item.crafting.ShapedRecipePattern;
  */
 public class ColorBackpackRecipe extends ShapedRecipe {
 
-    /** The pattern (vanilla keeps ShapedRecipe.pattern package private). */
+    public static final MapCodec<ColorBackpackRecipe> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+            Recipe.CommonInfo.MAP_CODEC.forGetter(r -> r.commonInfo),
+            CraftingRecipe.CraftingBookInfo.MAP_CODEC.forGetter(r -> r.bookInfo),
+            ShapedRecipePattern.MAP_CODEC.forGetter(r -> r.shapedPattern),
+            Identifier.CODEC.fieldOf("backpack_type").forGetter(r -> r.typeId),
+            BackpackSpecialty.CODEC.fieldOf("specialty").forGetter(r -> r.specialty),
+            IngredientBackpack.CODEC.optionalFieldOf("input_backpack").forGetter(r -> r.inputBackpack)
+    ).apply(i, ColorBackpackRecipe::new));
+    public static final StreamCodec<RegistryFriendlyByteBuf, ColorBackpackRecipe> STREAM_CODEC = StreamCodec.composite(
+            Recipe.CommonInfo.STREAM_CODEC, r -> r.commonInfo,
+            CraftingRecipe.CraftingBookInfo.STREAM_CODEC, r -> r.bookInfo,
+            ShapedRecipePattern.STREAM_CODEC, r -> r.shapedPattern,
+            Identifier.STREAM_CODEC, r -> r.typeId,
+            BackpackSpecialty.STREAM_CODEC, r -> r.specialty,
+            IngredientBackpack.OPTIONAL_STREAM_CODEC, r -> r.inputBackpack,
+            ColorBackpackRecipe::new);
+    public static final RecipeSerializer<ColorBackpackRecipe> SERIALIZER = new RecipeSerializer<>(CODEC, STREAM_CODEC);
+
+    /** The pattern (vanilla keeps ShapedRecipe.pattern private). */
     private final ShapedRecipePattern shapedPattern;
 
-    private final ResourceLocation typeId;
+    private final Identifier typeId;
     private final BackpackSpecialty specialty;
     private final Optional<IngredientBackpack> inputBackpack;
+    private final ItemStackTemplate result;
 
-    public ColorBackpackRecipe(String group, CraftingBookCategory category, ShapedRecipePattern pattern, ResourceLocation type, BackpackSpecialty specialty,
-                               Optional<IngredientBackpack> inputBackpack) {
-        super(group, category, pattern, IronBackpacksAPI.getStack(new BackpackVariant(IronBackpacksAPI.getBackpackType(type), specialty)));
+    public ColorBackpackRecipe(Recipe.CommonInfo commonInfo, CraftingRecipe.CraftingBookInfo bookInfo, ShapedRecipePattern pattern, Identifier type,
+                               BackpackSpecialty specialty, Optional<IngredientBackpack> inputBackpack) {
+        this(commonInfo, bookInfo, pattern, type, specialty, inputBackpack,
+                IronBackpacksAPI.getTemplate(new BackpackVariant(IronBackpacksAPI.getBackpackType(type), specialty)));
+    }
+
+    private ColorBackpackRecipe(Recipe.CommonInfo commonInfo, CraftingRecipe.CraftingBookInfo bookInfo, ShapedRecipePattern pattern, Identifier type,
+                                BackpackSpecialty specialty, Optional<IngredientBackpack> inputBackpack, ItemStackTemplate result) {
+        super(commonInfo, bookInfo, pattern, result);
         this.shapedPattern = pattern;
         this.typeId = type;
         this.specialty = specialty;
         this.inputBackpack = inputBackpack;
+        this.result = result;
     }
 
     @Nonnull
     @Override
-    public ItemStack assemble(@Nonnull CraftingInput matrix, @Nonnull HolderLookup.Provider registries) {
+    public ItemStack assemble(@Nonnull CraftingInput matrix) {
         ItemStack backpack = RecipeUtil.getFirstBackpackInGrid(matrix);
         if (backpack.isEmpty())
-            return super.assemble(matrix, registries);
+            return super.assemble(matrix);
 
-        ItemStack upgraded = getResultItem(registries).copy();
+        ItemStack upgraded = result.create();
         BackpackInfo upgradedInfo = Utils.getBackpackInfoFromStack(backpack);
         upgradedInfo.setRGBColor(getDyeColor(matrix));
 
@@ -111,44 +138,17 @@ public class ColorBackpackRecipe extends ShapedRecipe {
         return super.matches(input, level) && inputBackpack.map(b -> b.matches(input)).orElse(true);
     }
 
-    @Nonnull
+    /** The recipe book and JEI: the backpack slot shows the backpacks that fit. */
     @Override
-    public net.minecraft.core.NonNullList<net.minecraft.world.item.crafting.Ingredient> getIngredients() {
-        return inputBackpack.map(b -> b.display(super.getIngredients())).orElseGet(super::getIngredients);
+    public List<RecipeDisplay> display() {
+        return inputBackpack.map(b -> b.display(this, result)).orElseGet(super::display);
     }
 
     @Nonnull
     @Override
-    public RecipeSerializer<?> getSerializer() {
-        return RegistrarIronBackpacks.COLOR_RECIPE.get();
-    }
-
-    public static class Serializer implements RecipeSerializer<ColorBackpackRecipe> {
-        private static final MapCodec<ColorBackpackRecipe> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-                com.mojang.serialization.Codec.STRING.optionalFieldOf("group", "").forGetter(ColorBackpackRecipe::getGroup),
-                CraftingBookCategory.CODEC.fieldOf("category").orElse(CraftingBookCategory.MISC).forGetter(ColorBackpackRecipe::category),
-                ShapedRecipePattern.MAP_CODEC.forGetter(r -> r.shapedPattern),
-                ResourceLocation.CODEC.fieldOf("backpack_type").forGetter(r -> r.typeId),
-                BackpackSpecialty.CODEC.fieldOf("specialty").forGetter(r -> r.specialty),
-                IngredientBackpack.CODEC.optionalFieldOf("input_backpack").forGetter(r -> r.inputBackpack)
-        ).apply(i, ColorBackpackRecipe::new));
-        private static final StreamCodec<RegistryFriendlyByteBuf, ColorBackpackRecipe> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.STRING_UTF8, ColorBackpackRecipe::getGroup,
-                CraftingBookCategory.STREAM_CODEC, ColorBackpackRecipe::category,
-                ShapedRecipePattern.STREAM_CODEC, r -> r.shapedPattern,
-                ResourceLocation.STREAM_CODEC, r -> r.typeId,
-                BackpackSpecialty.STREAM_CODEC, r -> r.specialty,
-                ByteBufCodecs.optional(IngredientBackpack.STREAM_CODEC), r -> r.inputBackpack,
-                ColorBackpackRecipe::new);
-
-        @Override
-        public MapCodec<ColorBackpackRecipe> codec() {
-            return CODEC;
-        }
-
-        @Override
-        public StreamCodec<RegistryFriendlyByteBuf, ColorBackpackRecipe> streamCodec() {
-            return STREAM_CODEC;
-        }
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public RecipeSerializer<ShapedRecipe> getSerializer() {
+        // ShapedRecipe fixes the serializer's type; the generic type is erased at runtime
+        return (RecipeSerializer) SERIALIZER;
     }
 }

@@ -7,15 +7,9 @@
     "DDD"
   ],
   "key": {
-    "D": {
-      "tag": "c:gems/diamond"
-    },
-    "B": {
-      "item": "ironbackpacks:backpack"
-    },
-    "C": {
-      "item": "ironbackpacks:upgrade"
-    }
+    "D": "#c:gems/diamond",
+    "B": "ironbackpacks:backpack",
+    "C": "ironbackpacks:upgrade"
   },
   "backpack_type": "ironbackpacks:diamond",
   "specialty": "upgrade",

@@ -7,7 +7,7 @@ import gr8pefish.ironbackpacks.api.ModifyMethod;
 import gr8pefish.ironbackpacks.api.backpack.BackpackInfo;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import javax.annotation.Nonnegative;
@@ -17,13 +17,13 @@ import java.util.Set;
 
 public class BackpackUpgrade {
 
-    private final ResourceLocation identifier;
+    private final Identifier identifier;
     private final int applicationCost;
     private final int minimumTier;
     private final Set<BackpackUpgrade> conflicting;
     private int maxApplications = 1;
 
-    public BackpackUpgrade(@Nonnull ResourceLocation identifier, int applicationCost, @Nonnegative int minimumTier) {
+    public BackpackUpgrade(@Nonnull Identifier identifier, int applicationCost, @Nonnegative int minimumTier) {
         Preconditions.checkNotNull(identifier, "Identifier cannot be null");
         Preconditions.checkArgument(minimumTier >= 0, "Minimum tier cannot be negative");
 
@@ -57,7 +57,7 @@ public class BackpackUpgrade {
     }
 
     @Nonnull
-    public ResourceLocation getIdentifier() {
+    public Identifier getIdentifier() {
         return identifier;
     }
 

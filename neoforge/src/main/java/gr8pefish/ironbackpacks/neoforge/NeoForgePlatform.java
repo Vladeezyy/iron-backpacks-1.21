@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import gr8pefish.ironbackpacks.IronBackpacks;
@@ -12,9 +13,10 @@ import gr8pefish.ironbackpacks.container.ContainerBackpack;
 import gr8pefish.ironbackpacks.platform.IPlatform;
 import net.minecraft.core.Registry;
 import net.minecraft.network.Connection;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Player;
@@ -47,7 +49,7 @@ public class NeoForgePlatform implements IPlatform {
     static void init(IEventBus bus) {
         modBus = bus;
         EQUIPPED_BACKPACK = deferred(NeoForgeRegistries.Keys.ATTACHMENT_TYPES).register("equipped_backpack",
-                () -> AttachmentType.builder(() -> ItemStack.EMPTY).serialize(ItemStack.OPTIONAL_CODEC).build());
+                () -> AttachmentType.builder(() -> ItemStack.EMPTY).serialize(ItemStack.OPTIONAL_CODEC.fieldOf("stack")).build());
     }
 
     @SuppressWarnings("unchecked")
@@ -70,7 +72,7 @@ public class NeoForgePlatform implements IPlatform {
 
     @Override
     public boolean isClient() {
-        return FMLEnvironment.dist.isClient();
+        return FMLEnvironment.getDist().isClient();
     }
 
     @Override
@@ -84,7 +86,7 @@ public class NeoForgePlatform implements IPlatform {
     }
 
     @Override
-    public <T> Registry<T> createRegistry(ResourceKey<Registry<T>> key, ResourceLocation defaultKey) {
+    public <T> Registry<T> createRegistry(ResourceKey<Registry<T>> key, Identifier defaultKey) {
         Registry<T> registry = new RegistryBuilder<>(key).defaultKey(defaultKey).sync(true).create();
         NEW_REGISTRIES.add(registry);
         return registry;
@@ -96,8 +98,9 @@ public class NeoForgePlatform implements IPlatform {
     }
 
     @Override
-    public CreativeModeTab.Builder creativeTabBuilder() {
-        return CreativeModeTab.builder();
+    public CreativeModeTab creativeTab(Component title, Supplier<ItemStack> icon, Consumer<Consumer<ItemStack>> contents) {
+        // NeoForge makes CreativeModeTab.Output public
+        return CreativeModeTab.builder().title(title).icon(icon).displayItems((params, output) -> contents.accept(output::accept)).build();
     }
 
     @Override
@@ -113,7 +116,7 @@ public class NeoForgePlatform implements IPlatform {
 
     @Override
     public void sendToServer(CustomPacketPayload payload) {
-        PacketDistributor.sendToServer(payload);
+        net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(payload);
     }
 
     @Override

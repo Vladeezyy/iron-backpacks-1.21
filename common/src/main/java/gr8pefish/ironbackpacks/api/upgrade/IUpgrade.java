@@ -6,7 +6,7 @@ import com.google.common.base.Preconditions;
 
 import gr8pefish.ironbackpacks.api.IronBackpacksAPI;
 import gr8pefish.ironbackpacks.core.RegistrarIronBackpacks;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -24,7 +24,7 @@ public interface IUpgrade {
     default BackpackUpgrade getUpgrade(@Nonnull ItemStack stack) {
         Preconditions.checkNotNull(stack, "ItemStack cannot be null");
 
-        ResourceLocation upgrade = stack.get(RegistrarIronBackpacks.UPGRADE_ID.get());
+        Identifier upgrade = stack.get(RegistrarIronBackpacks.UPGRADE_ID.get());
         if (upgrade != null)
             return IronBackpacksAPI.getUpgrade(upgrade);
 

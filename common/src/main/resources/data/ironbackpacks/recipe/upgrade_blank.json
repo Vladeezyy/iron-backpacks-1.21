@@ -7,15 +7,9 @@
     "SPS"
   ],
   "key": {
-    "S": {
-      "tag": "c:strings"
-    },
-    "W": {
-      "tag": "c:rods/wooden"
-    },
-    "P": {
-      "item": "minecraft:paper"
-    }
+    "S": "#c:strings",
+    "W": "#c:rods/wooden",
+    "P": "minecraft:paper"
   },
   "result": {
     "id": "ironbackpacks:upgrade",

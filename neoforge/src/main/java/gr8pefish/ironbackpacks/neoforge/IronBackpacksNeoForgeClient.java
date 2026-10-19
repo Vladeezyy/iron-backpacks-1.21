@@ -2,22 +2,25 @@ package gr8pefish.ironbackpacks.neoforge;
 
 import gr8pefish.ironbackpacks.IronBackpacks;
 import gr8pefish.ironbackpacks.client.ClientEventHandler;
+import gr8pefish.ironbackpacks.client.ClientRecipes;
+import gr8pefish.ironbackpacks.client.ItemModelProperties;
 import gr8pefish.ironbackpacks.client.gui.GuiBackpack;
 import gr8pefish.ironbackpacks.core.RegistrarIronBackpacks;
-import gr8pefish.ironbackpacks.util.ColorUtil;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RecipesReceivedEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.event.RegisterSelectItemModelPropertyEvent;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
 
-/** Registers the common client parts (client/ClientEventHandler) with NeoForge's client events. */
+/** Registers the common client parts (client/ClientEventHandler, client/ItemModelProperties) with NeoForge's client events. */
 @EventBusSubscriber(modid = IronBackpacks.MODID, value = Dist.CLIENT)
 public final class IronBackpacksNeoForgeClient {
 
@@ -28,6 +31,7 @@ public final class IronBackpacksNeoForgeClient {
 
     @SubscribeEvent
     public static void registerKeys(RegisterKeyMappingsEvent event) {
+        event.registerCategory(ClientEventHandler.CATEGORY);
         ClientEventHandler.KEY_EQUIP.setKeyConflictContext(KeyConflictContext.IN_GAME);
         ClientEventHandler.KEY_OPEN.setKeyConflictContext(KeyConflictContext.IN_GAME);
         event.register(ClientEventHandler.KEY_EQUIP);
@@ -39,18 +43,21 @@ public final class IronBackpacksNeoForgeClient {
         event.register(RegistrarIronBackpacks.BACKPACK_MENU.get(), GuiBackpack::new);
     }
 
-    // Register colors for backpacks
     @SubscribeEvent
-    public static void registerColors(RegisterColorHandlersEvent.Item event) {
-        event.register(ColorUtil::getBackpackColor, RegistrarIronBackpacks.BACKPACK.get());
+    public static void registerTints(RegisterColorHandlersEvent.ItemTintSources event) {
+        event.register(ItemModelProperties.COLOR_ID, ItemModelProperties.BackpackColor.MAP_CODEC);
     }
 
     @SubscribeEvent
-    public static void setup(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> {
-            ItemProperties.register(RegistrarIronBackpacks.BACKPACK.get(), ClientEventHandler.VARIANT_PROPERTY, ClientEventHandler.VARIANT);
-            ItemProperties.register(RegistrarIronBackpacks.UPGRADE.get(), ClientEventHandler.UPGRADE_PROPERTY, ClientEventHandler.UPGRADE);
-        });
+    public static void registerProperties(RegisterSelectItemModelPropertyEvent event) {
+        event.register(ItemModelProperties.VARIANT_ID, ItemModelProperties.Variant.TYPE);
+        event.register(ItemModelProperties.UPGRADE_ID, ItemModelProperties.Upgrade.TYPE);
+    }
+
+    /** Before JEI, which reloads on this event too, reads them. */
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void onRecipes(RecipesReceivedEvent event) {
+        ClientRecipes.received(event.getRecipeMap().values().stream().map(RecipeHolder::value).toList());
     }
 
     private IronBackpacksNeoForgeClient() {}

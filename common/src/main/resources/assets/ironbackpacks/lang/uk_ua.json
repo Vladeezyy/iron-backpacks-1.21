@@ -11,7 +11,7 @@
   "jei.ironbackpacks.increaseTier.desc": "Щоб підвищити рівень рюкзака, просто дотримуйтеся потрібного §2рецепта майстрування§r. Під час покращення, можливо, доведеться обирати між різними видами рюкзаків. Обирайте з розумом!",
   "jei.ironbackpacks.increaseTier.desc2": "Під час переходу на новий рівень усі предмети, покращення, налаштування тощо попереднього рюкзака зберігаються!",
   "jei.ironbackpacks.increaseTier.name": "Підвищення рівня рюкзака",
-  "key.categories.ironbackpacks": "Iron Backpacks",
+  "key.category.ironbackpacks.main": "Iron Backpacks",
   "key.ironbackpacks.equip": "Одягнути/зняти рюкзак (вимкнено)",
   "key.ironbackpacks.open": "Відкрити рюкзак",
   "tooltip.ironbackpacks.backpack.emphasis.storage": "Упор на зберігання",

@@ -11,7 +11,7 @@
   "jei.ironbackpacks.increaseTier.desc": "Um die Stufe eines Rucksacks zu erhöhen, folge einfach dem gewünschten §2Herstellungsrezept§r. Beim Aufwerten musst du dich eventuell zwischen verschiedenen Rucksackarten entscheiden. Wähle weise!",
   "jei.ironbackpacks.increaseTier.desc2": "Beim Aufwerten auf eine neue Stufe behältst du automatisch alle Gegenstände, Aufwertungen, Einstellungen usw. des bisherigen Rucksacks!",
   "jei.ironbackpacks.increaseTier.name": "Rucksackstufe erhöhen",
-  "key.categories.ironbackpacks": "Iron Backpacks",
+  "key.category.ironbackpacks.main": "Iron Backpacks",
   "key.ironbackpacks.equip": "Rucksack an-/ablegen (deaktiviert)",
   "key.ironbackpacks.open": "Rucksack öffnen",
   "tooltip.ironbackpacks.backpack.emphasis.storage": "Schwerpunkt Lagerung",

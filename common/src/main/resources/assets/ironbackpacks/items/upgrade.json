@@ -1,0 +1,40 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "ironbackpacks:upgrade",
+    "cases": [
+      {
+        "when": "ironbackpacks:damage_bar",
+        "model": {
+          "type": "minecraft:model",
+          "model": "ironbackpacks:item/upgrade/damage_bar"
+        }
+      },
+      {
+        "when": "ironbackpacks:everlasting",
+        "model": {
+          "type": "minecraft:model",
+          "model": "ironbackpacks:item/upgrade/everlasting"
+        }
+      },
+      {
+        "when": "ironbackpacks:extra_upgrade",
+        "model": {
+          "type": "minecraft:model",
+          "model": "ironbackpacks:item/upgrade/extra_upgrade"
+        }
+      },
+      {
+        "when": "ironbackpacks:lock",
+        "model": {
+          "type": "minecraft:model",
+          "model": "ironbackpacks:item/upgrade/lock"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "ironbackpacks:item/upgrade/null"
+    }
+  }
+}

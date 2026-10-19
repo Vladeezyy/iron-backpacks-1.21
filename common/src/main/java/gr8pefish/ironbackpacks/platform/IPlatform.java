@@ -8,7 +8,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Player;
@@ -32,12 +32,14 @@ public interface IPlatform {
     <R, T extends R> Supplier<T> register(ResourceKey<? extends Registry<R>> registry, String name, Supplier<T> factory);
 
     /** Creates a synced registry with a default entry (the backpack types and upgrades). */
-    <T> Registry<T> createRegistry(ResourceKey<Registry<T>> key, ResourceLocation defaultKey);
+    <T> Registry<T> createRegistry(ResourceKey<Registry<T>> key, Identifier defaultKey);
 
     /** Whether an upgrade is switched on in the config (1.12 Upgrades.enableDamageBar and so on). */
     boolean upgradeEnabled(String upgrade);
 
-    CreativeModeTab.Builder creativeTabBuilder();
+    /** A creative tab; the contents go to the consumer (CreativeModeTab.Output is not public in vanilla). */
+    CreativeModeTab creativeTab(net.minecraft.network.chat.Component title, Supplier<ItemStack> icon,
+                                java.util.function.Consumer<java.util.function.Consumer<ItemStack>> contents);
 
     // Menus
 

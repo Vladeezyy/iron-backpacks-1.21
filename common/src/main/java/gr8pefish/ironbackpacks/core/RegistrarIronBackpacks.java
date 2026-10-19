@@ -23,7 +23,7 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.CreativeModeTab;
@@ -49,12 +49,12 @@ public final class RegistrarIronBackpacks {
     public static final Supplier<DataComponentType<ItemContainerContents>> PACK_INVENTORY = Services.PLATFORM.register(Registries.DATA_COMPONENT_TYPE, "pack_inventory",
             () -> DataComponentType.<ItemContainerContents>builder().persistent(ItemContainerContents.CODEC)
                     .networkSynchronized(ItemContainerContents.STREAM_CODEC).cacheEncoding().build());
-    public static final Supplier<DataComponentType<ResourceLocation>> UPGRADE_ID = Services.PLATFORM.register(Registries.DATA_COMPONENT_TYPE, "upgrade",
-            () -> DataComponentType.<ResourceLocation>builder().persistent(ResourceLocation.CODEC).networkSynchronized(ResourceLocation.STREAM_CODEC).build());
+    public static final Supplier<DataComponentType<Identifier>> UPGRADE_ID = Services.PLATFORM.register(Registries.DATA_COMPONENT_TYPE, "upgrade",
+            () -> DataComponentType.<Identifier>builder().persistent(Identifier.CODEC).networkSynchronized(Identifier.STREAM_CODEC).build());
 
     // Items
-    public static final Supplier<ItemBackpack> BACKPACK = Services.PLATFORM.register(Registries.ITEM, "backpack", ItemBackpack::new);
-    public static final Supplier<ItemUpgrade> UPGRADE = Services.PLATFORM.register(Registries.ITEM, "upgrade", ItemUpgrade::new);
+    public static final Supplier<ItemBackpack> BACKPACK = Services.PLATFORM.register(Registries.ITEM, "backpack", () -> new ItemBackpack(itemProperties("backpack")));
+    public static final Supplier<ItemUpgrade> UPGRADE = Services.PLATFORM.register(Registries.ITEM, "upgrade", () -> new ItemUpgrade(itemProperties("upgrade")));
 
     // Sounds
     public static final Supplier<SoundEvent> BACKPACK_OPEN = Services.PLATFORM.register(Registries.SOUND_EVENT, "open_backpack",
@@ -80,26 +80,24 @@ public final class RegistrarIronBackpacks {
 
     // Recipes
     public static final Supplier<RecipeSerializer<BackpackTierRecipe>> TIER_RECIPE = Services.PLATFORM.register(Registries.RECIPE_SERIALIZER, "backpack_tier",
-            BackpackTierRecipe.Serializer::new);
+            () -> BackpackTierRecipe.SERIALIZER);
     public static final Supplier<RecipeSerializer<ColorBackpackRecipe>> COLOR_RECIPE = Services.PLATFORM.register(Registries.RECIPE_SERIALIZER, "backpack_color",
-            ColorBackpackRecipe.Serializer::new);
+            () -> ColorBackpackRecipe.SERIALIZER);
 
     // Creative tab (1.12 IronBackpacks.TAB_IB)
     public static final Supplier<CreativeModeTab> TAB_IB = Services.PLATFORM.register(Registries.CREATIVE_MODE_TAB, IronBackpacks.MODID,
-            () -> Services.PLATFORM.creativeTabBuilder()
-                    .title(Component.translatable("itemGroup." + IronBackpacks.MODID))
-                    .icon(() -> IronBackpacksAPI.getStack(PACK_IRON.get() /*im not null don't worry*/, BackpackSpecialty.STORAGE))
-                    .displayItems((params, output) -> {
+            () -> Services.PLATFORM.creativeTab(Component.translatable("itemGroup." + IronBackpacks.MODID),
+                    () -> IronBackpacksAPI.getStack(PACK_IRON.get() /*im not null don't worry*/, BackpackSpecialty.STORAGE),
+                    output -> {
                         ItemBackpack.fillCreativeTab(output);
                         ItemUpgrade.fillCreativeTab(output);
-                    })
-                    .build());
+                    }));
 
     /** Loads this class: every entry above is handed to the loader. */
     public static void init() {}
 
     /** 1.12 registerBackpacks: the loader calls this when the types registry takes entries. */
-    public static void registerBackpackTypes(BiConsumer<ResourceLocation, BackpackType> helper) {
+    public static void registerBackpackTypes(BiConsumer<Identifier, BackpackType> helper) {
         helper.accept(IronBackpacksAPI.NULL, new BackpackType(IronBackpacksAPI.NULL, 0, 0, false, BackpackSize.MIN));
 
         helper.accept(id("basic"), new BackpackType(id("basic"), 0, 4, false, 9, 2));
@@ -109,7 +107,7 @@ public final class RegistrarIronBackpacks {
     }
 
     /** 1.12 registerUpgrades: the upgrades switched on in the config. */
-    public static void registerUpgrades(BiConsumer<ResourceLocation, BackpackUpgrade> helper) {
+    public static void registerUpgrades(BiConsumer<Identifier, BackpackUpgrade> helper) {
         helper.accept(IronBackpacksAPI.NULL, new BackpackUpgrade(IronBackpacksAPI.NULL, 0, 0));
 
         if (Services.PLATFORM.upgradeEnabled("damage_bar"))
@@ -123,13 +121,13 @@ public final class RegistrarIronBackpacks {
     }
 
     private static Supplier<BackpackType> type(String name) {
-        ResourceLocation id = id(name);
-        return () -> REGISTRY_TYPES.get(id);
+        Identifier id = id(name);
+        return () -> REGISTRY_TYPES.getValue(id);
     }
 
     private static Supplier<BackpackUpgrade> upgrade(String name) {
-        ResourceLocation id = id(name);
-        return () -> REGISTRY_UPGRADES.containsKey(id) ? REGISTRY_UPGRADES.get(id) : null;
+        Identifier id = id(name);
+        return () -> REGISTRY_UPGRADES.containsKey(id) ? REGISTRY_UPGRADES.getValue(id) : null;
     }
 
     /** The upgrade, or null when it is switched off in the config (1.12: a null @ObjectHolder). */
@@ -138,8 +136,13 @@ public final class RegistrarIronBackpacks {
         return upgrade.get();
     }
 
-    public static ResourceLocation id(String path) {
-        return ResourceLocation.fromNamespaceAndPath(IronBackpacks.MODID, path);
+    /** 26.x items need their id in the properties. */
+    private static net.minecraft.world.item.Item.Properties itemProperties(String name) {
+        return new net.minecraft.world.item.Item.Properties().setId(ResourceKey.create(Registries.ITEM, id(name)));
+    }
+
+    public static Identifier id(String path) {
+        return Identifier.fromNamespaceAndPath(IronBackpacks.MODID, path);
     }
 
     private RegistrarIronBackpacks() {}

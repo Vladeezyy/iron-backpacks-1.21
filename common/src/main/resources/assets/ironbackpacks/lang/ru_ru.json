@@ -11,7 +11,7 @@
   "jei.ironbackpacks.increaseTier.desc": "Чтобы повысить тир рюкзака, просто следуйте нужному §2рецепту крафта§r. При улучшении, возможно, придётся выбирать между разными видами рюкзаков. Выбирайте с умом!",
   "jei.ironbackpacks.increaseTier.desc2": "При переходе на новый тир все предметы, улучшения, настройки и т. д. прежнего рюкзака сохраняются!",
   "jei.ironbackpacks.increaseTier.name": "Повышение тира рюкзака",
-  "key.categories.ironbackpacks": "Iron Backpacks",
+  "key.category.ironbackpacks.main": "Iron Backpacks",
   "key.ironbackpacks.equip": "Надеть/снять рюкзак (отключено)",
   "key.ironbackpacks.open": "Открыть рюкзак",
   "tooltip.ironbackpacks.backpack.emphasis.storage": "Упор на хранение",
