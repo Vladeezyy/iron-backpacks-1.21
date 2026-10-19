@@ -34,10 +34,10 @@ the cherry-picked "PerfScene: no inactivity frame rate limit" commit. On the own
 - GitHub releases 1.0.3 for all four versions (NeoForge + Fabric jars).
 
 ## Open / next
-- **Modrinth**: the 26.x versions (and 1.0.3+1.21.1) are not uploaded to Modrinth (needs the owner's go-ahead and the
-  `modrinthToken` in `~/.gradle/gradle.properties`; publish materials are kept locally, not in git — see
-  modding-kb `conventions/modrinth.md`). The Modrinth page info from the owner's other PC was never pushed.
-- CurseForge page needs the "📜 Original mod" block (modding-kb `conventions/curseforge.md`) if the port goes there.
+- **Published 2026-10-19:** 1.0.3 for 1.21.1, 26.1.2, 26.2, 26.3 (NeoForge + Fabric, 8 jars) on Modrinth (`iron-backpacks`)
+  and CurseForge (project 1751003, approved) with `~/Desktop/modrinth-publish/ib_release.py <version> [--go]` (Mac;
+  files and changelogs from the GitHub releases). The CurseForge description has the "Original mod" block, the 26.x
+  versions and the 1.0.3 fixes.
 - Compatibility runs (Curios/Accessories etc.) were checked on 1.21.1 only.
 - Known: default open key I is also F3+I (debug "copy recreate command") on 26.x; no real conflict.
 - 400 backpacks on the ground render at ~15 % of shulker boxes' FPS on 26.3: vanilla item/generated geometry (the mod's
