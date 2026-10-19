@@ -61,8 +61,8 @@ public class EventHandler {
         info.removeUpgrade(upgrade);
         backpack.updateBackpack(left, info);
 
-        player.getInventory().placeItemBackInInventory(left);
-        player.getInventory().placeItemBackInInventory(right);
+        player.getInventory().placeItemBackInInventory(left, net.minecraft.util.Prediction.SERVER_ONLY);
+        player.getInventory().placeItemBackInInventory(right, net.minecraft.util.Prediction.SERVER_ONLY);
         return true;
     }
 

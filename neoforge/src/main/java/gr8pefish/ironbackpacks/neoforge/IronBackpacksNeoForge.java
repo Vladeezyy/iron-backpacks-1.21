@@ -72,7 +72,7 @@ public class IronBackpacksNeoForge {
         var environment = event.registerEnvironment(RegistrarIronBackpacks.id("default"), new TestEnvironmentDefinition.AllOf(List.of()));
         IBGameTests.tests().keySet().forEach(name -> event.registerTest(RegistrarIronBackpacks.id(name), new FunctionGameTestInstance(
                 ResourceKey.create(Registries.TEST_FUNCTION, RegistrarIronBackpacks.id(name)),
-                new TestData<>(environment, IBGameTests.structure(), 100, 0, true, Rotation.NONE, false, 1, 1, false, 0))));
+                new TestData<>(environment, IBGameTests.structure(), 100, 0, true, Rotation.NONE))));
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
