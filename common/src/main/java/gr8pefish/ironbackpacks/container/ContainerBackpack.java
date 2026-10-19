@@ -47,6 +47,8 @@ public class ContainerBackpack extends AbstractContainerMenu {
      */
     private int blocked = -1;
     private ItemStack blockedStack = ItemStack.EMPTY;
+    /** Where the backpack is: in the inventory (held or not) or equipped. */
+    private Mode mode = Mode.HELD;
 
     // Constructor
 
@@ -66,6 +68,32 @@ public class ContainerBackpack extends AbstractContainerMenu {
         this.backpackSize = backpackInfo.getVariant().getBackpackSize();
 
         setupSlots(inventoryPlayer, itemHandler, hand);
+        // Every change goes into the backpack at once (1.12 only saved on close): a copy of the backpack made while
+        // the GUI is open (dropped, moved by a sorting mod) carries the current contents, never an older state
+        // (gr8pefish/IronBackpacks#255, #221).
+        itemHandler.addListener(container -> save());
+    }
+
+    private void save() {
+        if (backpackStack.getItem() instanceof IBackpack backpack)
+            backpack.updateBackpack(backpackStack, backpackInfo);
+    }
+
+    /**
+     * Whether the opened backpack (this very stack, not an equal one) is still with the player. Dropping it, moving it
+     * out with another mod or replacing it closes the GUI, so its slots can't be emptied into the inventory while a
+     * copy lies on the ground (gr8pefish/IronBackpacks#234, #268).
+     */
+    private boolean backpackPresent(@Nonnull Player player) {
+        if (backpackStack.isEmpty())
+            return false;
+        if (mode == Mode.EQUIPPED)
+            return Services.PLATFORM.getEquippedBackpack(player) == backpackStack;
+        Inventory inventory = player.getInventory();
+        for (int i = 0; i < inventory.getContainerSize(); i++)
+            if (inventory.getItem(i) == backpackStack)
+                return true;
+        return false;
     }
 
     // Opening (1.12 GuiHandler: the server and the client each look up the backpack for the gui id and hand)
@@ -85,10 +113,12 @@ public class ContainerBackpack extends AbstractContainerMenu {
         if (selected.isEmpty())
             return null;
 
-        return switch (mode) {
+        ContainerBackpack container = switch (mode) {
             case HELD, EQUIPPED -> new ContainerBackpack(windowId, selected, player.getInventory(), hand);
             case INVENTORY -> new ContainerBackpack(windowId, selected, player.getInventory(), null).setBlockedStack(selected);
         };
+        container.mode = mode;
+        return container;
     }
 
     /** What the client needs to find the same backpack: the gui id and the hand. */
@@ -104,6 +134,15 @@ public class ContainerBackpack extends AbstractContainerMenu {
         ItemStack selected = getBackpackFor(player, mode, hand);
         if (selected.isEmpty())
             return;
+
+        if (mode != Mode.HELD) {
+            // the open key: 1.12 skipped the latch check of a right click (anyone's latched backpack opened) and the
+            // opening sound (gr8pefish/IronBackpacks#243)
+            BackpackInfo info = BackpackInfo.headerOf(selected);
+            if (info.hasUpgrade(RegistrarIronBackpacks.get(RegistrarIronBackpacks.UPGRADE_LOCK)) && !player.getGameProfile().getId().equals(info.getOwner()))
+                return;
+            player.playNotifySound(RegistrarIronBackpacks.BACKPACK_OPEN.get(), net.minecraft.sounds.SoundSource.NEUTRAL, 1.0F, 1.0F);
+        }
 
         Services.PLATFORM.openBackpackMenu(player, new SimpleMenuProvider((windowId, inventory, p) -> create(windowId, p, mode, hand), selected.getHoverName()),
                 new OpenData(mode, hand));
@@ -121,7 +160,8 @@ public class ContainerBackpack extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(@Nonnull Player player) {
-        return true;
+        // the server closes the GUI when this turns false (1.12: always true); the client has its own copies
+        return player.level().isClientSide || backpackPresent(player);
     }
 
     @Nonnull
@@ -164,10 +204,14 @@ public class ContainerBackpack extends AbstractContainerMenu {
 
     @Override
     public void clicked(int slotId, int button, @Nonnull ClickType flag, @Nonnull Player player) {
-        if (slotId < 0 || slotId > slots.size()) {
+        if (slotId < 0 || slotId >= slots.size()) {
             super.clicked(slotId, button, flag, player);
             return;
         }
+
+        // clicks that arrive in the same tick as the backpack left (before stillValid closes the GUI) do nothing
+        if (!player.level().isClientSide && !backpackPresent(player))
+            return;
 
         Slot slot = slots.get(slotId);
         if (!canTake(slotId, slot, button, player, flag))

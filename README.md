@@ -12,6 +12,7 @@ specification; every difference is listed in [PORTLOG.md](PORTLOG.md).
 
 | Version | Loader | Requires | Notes |
 |---|---|---|---|
+| 1.0.3+1.21.1 | NeoForge / Fabric | the same | fixes of the original's dupes and lost contents (see below) |
 | 1.0.2+1.21.1 | NeoForge / Fabric | NeoForge 21.1.197+ / Fabric Loader 0.16.14+ and Fabric API | faster backpack rendering, lighter models |
 | 1.0.1+1.21.1 | NeoForge / Fabric | the same | the Fabric version |
 | 1.0.0+1.21.1 | NeoForge | NeoForge 21.1.197+ | first release |
@@ -26,6 +27,19 @@ specification; every difference is listed in [PORTLOG.md](PORTLOG.md).
 | Key | Open Backpack (default I): the held, offhand or first backpack in the inventory. |
 | Config | `config/ironbackpacks-startup.toml` on NeoForge / `config/ironbackpacks-startup.json` on Fabric (enable upgrades), `config/ironbackpacks/blacklist.json` (items that can't go in). |
 | JEI | "Increase Backpack Tier" category; backpack variants and upgrades are separate entries. |
+
+## Bugs of the original fixed in this port
+Report bugs of this port [here](https://github.com/Vladeezyy/iron-backpacks-1.21/issues), not to the original author.
+
+| Original issue | Fix |
+|---|---|
+| [#234](https://github.com/gr8pefish/IronBackpacks/issues/234), [#268](https://github.com/gr8pefish/IronBackpacks/issues/268) item dupe: the backpack dropped or moved out while its GUI is open | the GUI closes as soon as that backpack leaves the player, clicks after that do nothing |
+| [#255](https://github.com/gr8pefish/IronBackpacks/issues/255), [#221](https://github.com/gr8pefish/IronBackpacks/issues/221) contents lost or reverted when an inventory sorter moves the open backpack | every change is saved into the backpack at once, not only on close |
+| [#243](https://github.com/gr8pefish/IronBackpacks/issues/243) no sound when the open key opens a backpack | the key plays the opening sound |
+| open key ignored the Latch upgrade (anyone could open someone else's latched backpack with the key) | the key checks the owner like a right click |
+| [#223](https://github.com/gr8pefish/IronBackpacks/issues/223), [#245](https://github.com/gr8pefish/IronBackpacks/issues/245), [#271](https://github.com/gr8pefish/IronBackpacks/issues/271) dyeing crashes on a server and dupes the dye | the colour recipes are data recipes without client code (tested on a dedicated server) |
+| [#244](https://github.com/gr8pefish/IronBackpacks/issues/244), [#264](https://github.com/gr8pefish/IronBackpacks/issues/264) backpacks shift-clicked into each other | backpacks can't go into backpacks in any way (shift, number keys, offhand swap) |
+| gold and diamond backpacks couldn't be dyed (the recipes asked for a basic backpack) | every tier can be dyed |
 
 ## Building
 Requires JDK 21. The game code is in `common`; `neoforge` and `fabric` are thin loader layers over it (after the

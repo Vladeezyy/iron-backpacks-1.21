@@ -65,6 +65,9 @@ public final class IBGameTests {
         TESTS.put("blacklist", IBGameTests::blacklist);
         TESTS.put("open_key", IBGameTests::openKey);
         TESTS.put("names", IBGameTests::names);
+        TESTS.put("no_dupe_dropped_while_open", IBGameTests::droppedWhileOpen);
+        TESTS.put("copy_while_open_keeps_contents", IBGameTests::copyWhileOpen);
+        TESTS.put("open_key_respects_latch", IBGameTests::openKeyLatch);
     }
 
     @GameTestGenerator
@@ -415,6 +418,81 @@ public final class IBGameTests {
         check(helper, new ItemStack(RegistrarIronBackpacks.UPGRADE.get()).getDescriptionId().equals("item.ironbackpacks.upgrade"), "blank key");
         ResourceLocation unknown = RegistrarIronBackpacks.id("nope");
         check(helper, IronBackpacksAPI.getUpgrade(unknown).isNull() && IronBackpacksAPI.getBackpackType(unknown).isNull(), "unknown ids are the null entries");
+        helper.succeed();
+    }
+
+    /**
+     * gr8pefish/IronBackpacks#234, #268: the held backpack dropped while its GUI is open (Q pressed with the open key,
+     * another mod pulling it out). 1.12 let the slots be emptied afterwards while the dropped copy kept them: a dupe.
+     */
+    private static void droppedWhileOpen(GameTestHelper helper) {
+        ServerPlayer player = player(helper);
+        player.getInventory().selected = 0;
+        player.setItemInHand(InteractionHand.MAIN_HAND, pack("basic", BackpackSpecialty.NONE));
+        player.getInventory().setItem(9, new ItemStack(Items.EMERALD, 12));
+        ContainerBackpack.open(player, ContainerBackpack.Mode.HELD, InteractionHand.MAIN_HAND);
+        ContainerBackpack menu = (ContainerBackpack) player.containerMenu;
+        menu.clicked(18, 0, ClickType.QUICK_MOVE, player);   // emeralds into the backpack
+        check(helper, menu.getSlot(0).getItem().is(Items.EMERALD), "moved in");
+
+        check(helper, player.drop(false), "drop key");       // the drop key: the selected stack
+        ItemEntity dropped = helper.getLevel().getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(8),
+                e -> e.getItem().getItem() instanceof ItemBackpack).stream().findFirst().orElse(null);
+        check(helper, dropped != null && player.getMainHandItem().isEmpty(), "backpack dropped");
+        menu.clicked(0, 0, ClickType.QUICK_MOVE, player);     // try to take the emeralds out
+        int emeralds = 0;
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++)
+            if (player.getInventory().getItem(i).is(Items.EMERALD))
+                emeralds += player.getInventory().getItem(i).getCount();
+        check(helper, emeralds == 0, "nothing taken out of a dropped backpack: " + emeralds);
+        check(helper, !menu.stillValid(player), "GUI closes");
+        BackpackInfo info = BackpackInfo.fromStack(dropped.getItem());
+        check(helper, info.getInventory().getStackInSlot(0).is(Items.EMERALD) && info.getInventory().getStackInSlot(0).getCount() == 12,
+                "the dropped backpack has the emeralds");
+        player.closeContainer();
+        dropped.discard();
+        player.discard();
+        helper.succeed();
+    }
+
+    /**
+     * gr8pefish/IronBackpacks#255, #221: a sorting mod replaces the open backpack with a copy. 1.12 saved on close into
+     * the old stack, so the copy reverted to the contents from before the GUI opened.
+     */
+    private static void copyWhileOpen(GameTestHelper helper) {
+        ServerPlayer player = player(helper);
+        player.getInventory().setItem(20, pack("iron", BackpackSpecialty.STORAGE));
+        player.getInventory().setItem(9, new ItemStack(Items.DIAMOND, 5));
+        RequestAction.OPEN_BACKPACK.handle(player);
+        ContainerBackpack menu = (ContainerBackpack) player.containerMenu;
+        int size = menu.getBackpackSize().getTotalSize();
+        menu.clicked(size, 0, ClickType.QUICK_MOVE, player);  // inventory slot 9 -> backpack
+        check(helper, menu.getSlot(0).getItem().is(Items.DIAMOND), "moved in");
+
+        ItemStack copy = player.getInventory().getItem(20).copy();
+        player.getInventory().setItem(20, ItemStack.EMPTY);
+        player.getInventory().setItem(30, copy);              // sorted to another slot
+        check(helper, BackpackInfo.fromStack(copy).getInventory().getStackInSlot(0).getCount() == 5, "the copy has the diamonds");
+        check(helper, !menu.stillValid(player), "GUI closes");
+        player.closeContainer();
+        player.discard();
+        helper.succeed();
+    }
+
+    /** The open key doesn't open someone else's latched backpack (1.12 checked the latch on right click only). */
+    private static void openKeyLatch(GameTestHelper helper) {
+        ServerPlayer player = player(helper);
+        ItemStack latched = pack("basic", BackpackSpecialty.NONE);
+        BackpackInfo info = BackpackInfo.fromStack(latched).addUpgrade(upgrade("lock")).setOwner(UUID.randomUUID());
+        IronBackpacksAPI.applyPackInfo(latched, info);
+        player.getInventory().setItem(20, latched);
+        RequestAction.OPEN_BACKPACK.handle(player);
+        check(helper, !(player.containerMenu instanceof ContainerBackpack), "someone else's latched backpack stays closed");
+        IronBackpacksAPI.applyPackInfo(latched, info.setOwner(player.getUUID()));
+        RequestAction.OPEN_BACKPACK.handle(player);
+        check(helper, player.containerMenu instanceof ContainerBackpack, "the owner opens it");
+        player.closeContainer();
+        player.discard();
         helper.succeed();
     }
 

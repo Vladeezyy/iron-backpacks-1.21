@@ -99,3 +99,16 @@ and opening, networking, the equipped-backpack data, the config, the mock connec
 - Released as 1.0.2 (2026-10-17): GitHub release v1.0.2 (Latest, NeoForge and Fabric jars; 17 GameTests on both
   loaders and `:fabric:prodGametest` with the release jar) and Modrinth versions 1.0.2+1.21.1-neoforge / -fabric (JEI
   optional, Fabric API required on Fabric).
+
+## 2026-10-19 — bugs of the original (1.0.3)
+Open issues of gr8pefish/IronBackpacks (42) read; those of 1.12.2 that the port still had are fixed in common code:
+- #234, #268 (dupe): `ContainerBackpack.stillValid` was always true, so the GUI of a dropped / moved backpack stayed
+  open and its slots could be emptied while the dropped copy kept the items. Now the opened stack (by reference) must
+  still be in the player's inventory (or equipped); clicks of the same tick are ignored, the server closes the GUI.
+- #255, #221 (lost / reverted contents with inventory sorters): the contents were written on close into the old stack.
+  Now every slot change is written into the backpack at once (a listener on the backpack container).
+- #243: the open key plays the opening sound (to that player only); the key also checks the Latch owner, which 1.12
+  checked on right click only.
+- Already fine in the port: #223 / #245 / #271 (the colour recipe called client code on a server), #244 / #264
+  (nesting, the later 1.12 commit 0364d2d), #261 (the size config, never read in 1.12, left out).
+- 3 new GameTests (20 in all) on NeoForge and Fabric.
