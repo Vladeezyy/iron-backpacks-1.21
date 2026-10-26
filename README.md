@@ -41,24 +41,6 @@ Report bugs of this port [here](https://github.com/Vladeezyy/iron-backpacks-1.21
 | [#244](https://github.com/gr8pefish/IronBackpacks/issues/244), [#264](https://github.com/gr8pefish/IronBackpacks/issues/264) backpacks shift-clicked into each other | backpacks can't go into backpacks in any way (shift, number keys, offhand swap) |
 | gold and diamond backpacks couldn't be dyed (the recipes asked for a basic backpack) | every tier can be dyed |
 
-## Building
-Requires JDK 21. The game code is in `common`; `neoforge` and `fabric` are thin loader layers over it (after the
-MultiLoader template), behind `gr8pefish.ironbackpacks.platform.IPlatform`.
-```bash
-./gradlew build                          # jars in neoforge/build/libs and fabric/build/libs
-./gradlew :neoforge:runClient            # dev clients (with JEI)
-./gradlew :fabric:runClient
-./gradlew :neoforge:runGameTestServer    # headless in-game tests
-./gradlew :fabric:runGametest
-./gradlew :fabric:prodGametest           # the tests with the release Fabric jar on a real Fabric server
-./gradlew :neoforge:runScene             # scripted scene: screenshots to <loader>/run/screenshots/ (needs run/saves/ib_scene)
-./gradlew :fabric:runScene
-```
-Resources are generated from the original 1.12.2 assets:
-```bash
-rm -rf common/src/main/resources/{assets,data} && python3 -I tools/gen_resources.py <IronBackpacks dev-1.12>/src/main/resources/assets/ironbackpacks common/src/main/resources
-```
-
 ## License and credits
 GPL-3.0, the same license as the original — see [LICENSE](LICENSE).
 Original mod, art, sounds and translations: gr8pefish, TehNut and the Iron Backpacks contributors; backpack GUI code
