@@ -55,26 +55,6 @@ Report bugs of this port [here](https://github.com/Vladeezyy/iron-backpacks-1.21
 Each `mc/*` branch is the port commit on top of the previous one (`main` → `mc/26.1.2` → `mc/26.2` → `mc/26.3`); fixes
 for every version go into `main` first. What changed for 26.x is in [PORTLOG.md](PORTLOG.md).
 
-## Building
-Requires JDK 21 (`main`) or JDK 25 (`mc/*`, `JAVA_HOME` pointing to it). The game code is in `common`; `neoforge` and
-`fabric` are thin loader layers over it (after the MultiLoader template), behind
-`gr8pefish.ironbackpacks.platform.IPlatform`.
-```bash
-./gradlew build                          # jars in neoforge/build/libs and fabric/build/libs
-./gradlew :neoforge:runClient            # dev clients (with JEI)
-./gradlew :fabric:runClient
-./gradlew :neoforge:runGameTestServer    # headless in-game tests
-./gradlew :fabric:runGametest
-./gradlew :fabric:prodGametest           # the tests with the release Fabric jar on a real Fabric server
-./gradlew :neoforge:runScene             # scripted scene: screenshots to <loader>/run/screenshots/ (1.21.1: needs run/saves/ib_scene; 26.x: makes a new world)
-./gradlew :fabric:runScene
-```
-Resources are generated from the original 1.12.2 assets:
-```bash
-rm -rf common/src/main/resources/{assets,data} && python3 -I tools/gen_resources.py <IronBackpacks dev-1.12>/src/main/resources/assets/ironbackpacks common/src/main/resources
-```
-On the `mc/*` branches they are then turned into the 26.x format: `python3 -I tools/convert_26.py common/src/main/resources`.
-
 ## License and credits
 GPL-3.0, the same license as the original — see [LICENSE](LICENSE).
 Original mod, art, sounds and translations: gr8pefish, TehNut and the Iron Backpacks contributors; backpack GUI code
